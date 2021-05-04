@@ -20,9 +20,9 @@ public class MP_Play : MonoBehaviour
 #endif
 
     //_______________________________
-    public float menuLeftX = -6.03f;
-    public float menuLeftY = -3f;
-    public float menuDeltaX = 2.9f;
+    const float menuLeftX = -5.63f;
+    const float menuLeftY = -3f;
+    const float menuDeltaX = 2.9f;
     //_______________________________
     public void TypeStep()
     {
@@ -105,7 +105,7 @@ public class MP_Play : MonoBehaviour
         for (int i = menuLeftPl; i != (menuRightPl + 1) % Base.numberOfPlayers; i = (i + 1) % Base.numberOfPlayers)
         {
             Base.playersText[i].statsList.transform.position = new Vector3(
-                -6 + menuDeltaX * (((i - menuLeftPl) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers), -2.9f, 0);
+                menuLeftX + menuDeltaX * (((i - menuLeftPl) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers), -2.9f, 0);
         }
     }
 
@@ -161,7 +161,7 @@ public class MP_Play : MonoBehaviour
             Base.playersText[i].statsList.SetActive(true);
             if (i < 3)
                 Base.playersText[i].statsList.transform.Translate(
-                    new Vector3(menuLeftX + 0.4f + menuDeltaX * i, -2.9f, 0));
+                    new Vector3(menuLeftX + menuDeltaX * i, -2.9f, 0));
             else
                 Base.playersText[i].statsList.SetActive(false);
             Base.playersText[i].nameText =

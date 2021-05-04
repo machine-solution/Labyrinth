@@ -605,7 +605,7 @@ MonoBehaviour:
   menuRightPl: 0
   menuBut: {fileID: 0}
   enteringBut: {fileID: 0}
-  menuLeftX: -6.03
+  menuLeftX: -5.63
   menuLeftY: -3
   menuDeltaX: 2.94
 --- !u!1 &435338243

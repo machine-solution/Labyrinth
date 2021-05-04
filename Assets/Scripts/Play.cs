@@ -20,7 +20,7 @@ public class Play : MonoBehaviour
 #endif
 
     //_______________________________
-    public float menuLeftX = -6.03f;
+    public float menuLeftX = -5.63f;
     public float menuLeftY = -3f;
     public float menuDeltaX = 2.9f;
     //_______________________________
@@ -105,7 +105,7 @@ public class Play : MonoBehaviour
         for (int i = menuLeftPl; i != (menuRightPl + 1) % Base.numberOfPlayers; i = (i + 1) % Base.numberOfPlayers)
         {
             Base.playersText[i].statsList.transform.position = new Vector3(
-                -6 + menuDeltaX * (((i - menuLeftPl) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers), -2.9f, 0);
+                menuLeftX + menuDeltaX * (((i - menuLeftPl) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers), -2.9f, 0);
         }
     }
 
@@ -161,7 +161,7 @@ public class Play : MonoBehaviour
             Base.playersText[i].statsList.SetActive(true);
             if (i < 3)
                 Base.playersText[i].statsList.transform.Translate(
-                    new Vector3(menuLeftX + 0.4f + menuDeltaX * i, -2.9f, 0));
+                    new Vector3(menuLeftX + menuDeltaX * i, -2.9f, 0));
             else
                 Base.playersText[i].statsList.SetActive(false);
             Base.playersText[i].nameText =
@@ -190,7 +190,7 @@ public class Play : MonoBehaviour
         for (int j = 0; j < Min(Base.numberOfPlayers, 3); ++j)
         {
             playerFrame[j] = Instantiate(Resources.Load<GameObject>("frame"));
-            playerFrame[j].transform.position = new Vector3(menuLeftX + j * menuDeltaX, menuLeftY, 0);
+            playerFrame[j].transform.position = new Vector3(menuLeftX - 0.4f + j * menuDeltaX, menuLeftY, 0);
         }
         forwardBut.SetActive(true);
         forwardBut.transform.position = new Vector3((Min(Base.numberOfPlayers, 3) - 1) * menuDeltaX - 4.19f, -3f, 0);
