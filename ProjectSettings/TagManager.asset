@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - button
+  - changer
+  - slider
+  - scroller
+  - background
+  - toggle
+  - inputtext
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - shroud
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: middleground
+    uniqueID: 4231622613
+    locked: 0
+  - name: wall
+    uniqueID: 3382440067
+    locked: 0
+  - name: map
+    uniqueID: 3235529595
+    locked: 0
+  - name: animation
+    uniqueID: 1952713019
+    locked: 0
+  - name: animation effect
+    uniqueID: 1144960049
+    locked: 0
+  - name: resultLine
+    uniqueID: 2637607547
+    locked: 0
+  - name: results
+    uniqueID: 2345868243
+    locked: 0
+  - name: button
+    uniqueID: 1243739669
+    locked: 0
+  - name: button up
+    uniqueID: 4148102069
+    locked: 0
+  - name: shroud1
+    uniqueID: 1966123401
+    locked: 0
+  - name: pop-UI
+    uniqueID: 669571877
+    locked: 0
+  - name: pop-button
+    uniqueID: 644844607
+    locked: 0
+  - name: pop-text
+    uniqueID: 3277347573
+    locked: 0
+  - name: special effects
+    uniqueID: 3615948987
+    locked: 0
