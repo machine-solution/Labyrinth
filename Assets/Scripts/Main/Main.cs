@@ -542,7 +542,8 @@ public class Bot_v1 : Bot
                     used[to[0], to[1]] = true;
                     q.Enqueue(to);
                     p[to[0], to[1]] = v;
-                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10) { ++notExpl_size; notExpl[notExpl_size] = to; }
+                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10)
+                        notExpl[++notExpl_size] = to;
                 }
             }
         }
@@ -987,11 +988,11 @@ public class Bot_v1 : Bot
         }
         public int X()
         {
-            return (B.x + dspy_x);
+            return B.x + dspy_x;
         }
         public int Y()
         {
-            return (B.y + dspy_y);
+            return B.y + dspy_y;
         }
     }
     public player[] players;
@@ -1354,7 +1355,8 @@ public class Bot_Alice : Bot_v1
                     used[to[0], to[1]] = true;
                     q.Enqueue(to);
                     p[to[0], to[1]] = v;
-                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10) { ++notExpl_size; notExpl[notExpl_size] = to; }
+                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10)
+                        notExpl[++notExpl_size] = to;
                 }
             }
         }
@@ -1364,10 +1366,7 @@ public class Bot_Alice : Bot_v1
         path_size = 0;
         int[] to = { x, y };
         for (int[] v = to; v[0] != -1; v = p[v[0], v[1]])
-        {
-            ++path_size;
-            path[path_size] = v;
-        }
+            path[++path_size] = v;
     }
     protected override void GoToV()
     {
@@ -1600,7 +1599,8 @@ public class Bot_Jam : Bot_v1
                     q.Enqueue(to);
                     p[to[0], to[1]] = v;
                     if (ind[to[0], to[1]] > 0 && notExpl_size < 1)
-                        if (Check.treasures(ind[to[0], to[1]] - 1) > 0) { ++notExpl_size; notExpl[notExpl_size] = to; }
+                        if (Check.treasures(ind[to[0], to[1]] - 1) > 0)
+                            notExpl[++notExpl_size] = to;
                 }
             }
         }
