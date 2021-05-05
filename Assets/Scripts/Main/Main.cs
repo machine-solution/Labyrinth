@@ -431,7 +431,7 @@ public static class Check
 
 }
 
-class Bot
+public class Bot
 {
     //constants
     protected static readonly string[] types = { "step", "strike", "fire", "throw" };
@@ -449,7 +449,7 @@ class Bot
     public virtual void Join(int players, int treasures, int size, int id) { }
     public virtual void Update(string type, string side, string result, int id) { }
 }
-class Bot_v1 : Bot
+public class Bot_v1 : Bot
 {
     protected const int EXIT = -2, WALL = -1, UNKNOWN = 0, FREE = 1;
     protected int Players, Treasures, Size, my_id;
@@ -1290,7 +1290,7 @@ class Bot_v1 : Bot
         ansSide = sides[side];
     }
 }
-class Bot_Alice : Bot_v1
+public class Bot_Alice : Bot_v1
 {
     int x, y;
     int[,,] can_to_move = new int[20, 20, 2];
@@ -1571,11 +1571,11 @@ class Bot_Alice : Bot_v1
         return false;
     }
 }
-class Bot_Bob : Bot_v1
+public class Bot_Bob : Bot_v1
 {
 
 }
-class Bot_Jam : Bot_v1
+public class Bot_Jam : Bot_v1
 {
     protected void BFS(int[,] ind)
     {
