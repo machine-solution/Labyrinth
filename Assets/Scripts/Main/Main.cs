@@ -431,17 +431,32 @@ public static class Check
 
 }
 
-public class Bot
+class Bot
 {
-    protected bool broken;
-    public bool bot_show;
-    protected System.Random rand = new System.Random();
-    protected int Players, Treasures, Size, my_id;
+    //constants
+    protected static readonly string[] types = { "step", "strike", "fire", "throw" };
+    protected static readonly string[] sides = { "left", "down", "right", "up" };
+    protected const int STEP = 0, STRIKE = 1, FIRE = 2, THROW = 3;
+    protected const int LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3, ARITY = 4;
+
+    //variables
+    public bool broken;
+    public static string error = "";
+    protected static System.Random rand = new System.Random();
     public string ansType, ansSide;
-    public virtual void Join(int the_players, int the_treasures, int the_size, int the_id)
+
+    //functions
+    public virtual void Join(int players, int treasures, int size, int id) { }
+    public virtual void Update(string type, string side, string result, int id) { }
+}
+class Bot_v1 : Bot
+{
+    protected const int EXIT = -2, WALL = -1, UNKNOWN = 0, FREE = 1;
+    protected int Players, Treasures, Size, my_id;
+    public override void Join(int the_players, int the_treasures, int the_size, int the_id)
     {
-        ansType = "step";
-        ansSide = Int_to_ansSide(rand.Next(4));
+        ansType = types[STEP];
+        ansSide = sides[rand.Next(ARITY)];
         try
         {
             Players = the_players;
@@ -458,42 +473,32 @@ public class Bot
             hosp_map = new Map(2 * Size);
             UpdateStats();
         }
-        catch
+        catch (System.Exception e)
         {
             broken = true;
+            error += e.Message + "\n" + e.StackTrace + "\n";
         }
     }
-    public int k, choice;
-    protected string Int_to_ansSide(int q)
+    protected int k, choice;
+    protected int side_to_int(string m)
     {
-        string[] s = { "left", "down", "right", "up" };
-        return s[q];
-    }
-    protected int AnsSide_to_int(string m)
-    {
-        string[] s = { "left", "down", "right", "up" };
-        for (int i = 0; i < s.Length; ++i) if (m == s[i]) return i;
+        for (int i = 0; i < ARITY; ++i)
+            if (m == sides[i])
+                return i;
         return -1;
     }
-    protected virtual int Can(int a, int b, int k)
+    protected virtual int Can(int a, int b, int k) => my_map.Can(a, b, k);
+    protected virtual bool Have(int form, int a, int b)
     {
-        return my_map.Can(a, b, k);
+        for (int i = 0; i < ARITY; ++i)
+            if (Can(a, b, i) == form)
+                return true;
+        return false;
     }
-    protected virtual bool HaveWall_or_Exit(int a, int b)
-    {
-        return (Can(a, b, 0) < 0 || Can(a, b, 1) < 0 || Can(a, b, 2) < 0 || Can(a, b, 3) < 0);
-    }
-    protected virtual bool Have0(int a, int b)
-    {
-        return (Can(a, b, 0) == 0 || Can(a, b, 1) == 0 || Can(a, b, 2) == 0 || Can(a, b, 3) == 0);
-    }
-    protected virtual bool Have1(int a, int b)
-    {
-        return (Can(a, b, 0) == 1 || Can(a, b, 1) == 1 || Can(a, b, 2) == 1 || Can(a, b, 3) == 1);
-    }
+    protected virtual bool Have(int form) => Have(form, my_map.x, my_map.y);
     protected virtual bool HaveArs()
     {
-        return (knifes != Check.knifes(my_id) || bullets != Check.bullets(my_id) || armors != Check.armors(my_id) || crackers != Check.crackers(my_id));
+        return knifes != Check.knifes(my_id) || bullets != Check.bullets(my_id) || armors != Check.armors(my_id) || crackers != Check.crackers(my_id);
     }
     protected int[] v = new int[2];
     protected int[][] notExpl = new int[11][];
@@ -501,6 +506,13 @@ public class Bot
     protected int[][] path;
     protected bool[,] used;
     protected int path_size, notExpl_size;
+    protected virtual void NewBFS()
+    {
+        used = new bool[2 * Size, 2 * Size];
+        p = new int[2 * Size, 2 * Size][];
+        notExpl = new int[11][];
+        notExpl_size = 0;
+    }
     protected virtual void BFS()
     {
         NewBFS();
@@ -512,58 +524,28 @@ public class Bot
         p[s[0], s[1]] = null_;
         while (q.Count > 0)
         {
-            int[] v = q.Dequeue(); int z = v[0], t = v[1];
+            int[] v = q.Dequeue();
+            int z = v[0], t = v[1];
             for (int i = 0; i < 4; ++i)
             {
-                int dx = 0, dy = 0; if (i == 0) dx = -1; if (i == 1) dy = -1; if (i == 2) dx = 1; if (i == 3) dy = 1;
-                bool Can = this.Can(z, t, i) == 1;
+                int dx = 0, dy = 0;
+
+                if (i == LEFT) dx = -1;
+                else if (i == DOWN) dy = -1;
+                else if (i == RIGHT) dx = 1;
+                else if (i == UP) dy = 1;
+
+                bool Can = this.Can(z, t, i) == FREE;
                 int[] to = { z + dx, t + dy };
                 if (Can && !used[to[0], to[1]])
                 {
                     used[to[0], to[1]] = true;
                     q.Enqueue(to);
                     p[to[0], to[1]] = v;
-                    if (Have0(to[0], to[1]) && notExpl_size < 10)
-                    { ++notExpl_size; notExpl[notExpl_size] = to; }
+                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10) { ++notExpl_size; notExpl[notExpl_size] = to; }
                 }
             }
         }
-    }
-    protected virtual void BFS(int[,] a)
-    {
-        NewBFS();
-        Queue<int[]> q = new Queue<int[]>();
-        int[] s = { my_map.x, my_map.y };
-        q.Enqueue(s);
-        used[s[0], s[1]] = true;
-        int[] null_ = { -1, -1 };
-        p[s[0], s[1]] = null_;
-        while (q.Count > 0 && notExpl_size < 1)
-        {
-            int[] v = q.Dequeue(); int z = v[0], t = v[1];
-            for (int i = 0; i < 4 && notExpl_size < 1; ++i)
-            {
-                int dx = 0, dy = 0; if (i == 0) dx = -1; if (i == 1) dy = -1; if (i == 2) dx = 1; if (i == 3) dy = 1;
-                bool Can = this.Can(z, t, i) == 1;
-                int[] to = { z + dx, t + dy };
-                if (Can && !used[to[0], to[1]])
-                {
-                    used[to[0], to[1]] = true;
-                    q.Enqueue(to);
-                    p[to[0], to[1]] = v;
-                    if (a[to[0], to[1]] > 0 && notExpl_size < 1)
-                        if (Check.treasures(a[to[0], to[1]] - 1) > 0)
-                        { ++notExpl_size; notExpl[notExpl_size] = to; }
-                }
-            }
-        }
-    }
-    protected virtual void NewBFS()
-    {
-        used = new bool[2 * Size, 2 * Size];
-        p = new int[2 * Size, 2 * Size][];
-        notExpl = new int[11][];
-        notExpl_size = 0;
     }
     protected virtual void Path(int a, int b)
     {
@@ -572,19 +554,15 @@ public class Bot
         int[] to = { a, b };
         for (int[] v = to; v[0] != -1; v = p[v[0], v[1]])
         {
-            ++path_size;
-            path[path_size] = v;
+            path[++path_size] = v;
         }
     }
-    protected virtual void NewDFS()
-    {
-        used = new bool[2 * Size, 2 * Size];
-    }
+    protected virtual void NewDFS() => used = new bool[2 * Size, 2 * Size];
     protected virtual void GoToV()
     {
         int x = my_map.x, y = my_map.y;
-        if (knifes > 0 && rand.Next(5) == 0 && Have1(x, y)) { ansType = "strike"; ansSide = F(1); choice = 0; }
-        else if (bullets > 0 && rand.Next(15) == 0 && Have1(x, y)) { ansType = "fire"; ansSide = F(1); choice = 0; }
+        if (knifes > 0 && rand.Next(5) == 0 && Have(FREE)) { ansType = "strike"; ansSide = Random(FREE); choice = 0; }
+        else if (bullets > 0 && rand.Next(15) == 0 && Have(FREE)) { ansType = "fire"; ansSide = Random(FREE); choice = 0; }
         else
         {
             --path_size;
@@ -593,12 +571,12 @@ public class Bot
             {
                 int a = path[path_size][0], b = path[path_size][1];
                 if (a == x - 1) t = 0; if (b == y - 1) t = 1; if (a == x + 1) t = 2; if (b == y + 1) t = 3;
-                ansType = "step"; ansSide = Int_to_ansSide(t);
+                ansType = "step"; ansSide = sides[t];
                 if (v[0] == a && v[1] == b) choice = 0;
             }
             else
             {
-                ansType = "step"; ansSide = Int_to_ansSide(rand.Next(4));
+                ansType = "step"; ansSide = sides[rand.Next(ARITY)];
                 choice = 0;
             }
         }
@@ -609,30 +587,36 @@ public class Bot
         if (IsJam()) bullets = 0;
         if (choice == 0) UpdateChoice();
         if (choice == 1 || choice == 5) GoToV();
-        if (choice == 2 || choice == 3) { ansType = "step"; ansSide = Int_to_ansSide(k); }
+        if (choice == 2 || choice == 3) { ansType = "step"; ansSide = sides[k]; }
         if (choice == 4)
         {
-            if (knifes > 0) { ansType = "strike"; ansSide = (Have1(my_map.x, my_map.y)) ? F(1) : F(0); }
-            else { ansType = "step"; ansSide = F(-1) != "" ? F(-1) : (F(-2) != "" ? F(-2) : Int_to_ansSide(rand.Next(4))); }
+            if (knifes > 0) { ansType = "strike"; ansSide = (Have(FREE, my_map.x, my_map.y)) ? Random(FREE) : Random(UNKNOWN); }
+            else
+            {
+                ansType = "step";
+                ansSide =
+                    Have(WALL) ? Random(WALL)
+                    : (Have(EXIT) ? Random(EXIT)
+                    : sides[rand.Next(ARITY)]);
+            }
         }
         if (IsJam()) bullets = Check.bullets(my_id);
     }
     protected virtual void UpdateChoice()
     {
-        int x = my_map.x, y = my_map.y;
-        if (knifes > 0 && rand.Next(5) == 0 && Have1(x, y)) { ansType = "strike"; ansSide = F(1); }
-        else if (bullets > 0 && rand.Next(15) == 0 && Have1(x, y)) { ansType = "fire"; ansSide = F(1); }
+        if (knifes > 0 && rand.Next(5) == 0 && Have(FREE)) { ansType = "strike"; ansSide = Random(FREE); }
+        else if (bullets > 0 && rand.Next(15) == 0 && Have(FREE)) { ansType = "fire"; ansSide = Random(FREE); }
         else
         {
             BFS(); ansType = "step"; int t = Max((Treasures - SumOut()) / 2 - treasures, 1);
-            if (x == my_map.exit[0] && y == my_map.exit[1] && treasures > 0) { ansSide = Int_to_ansSide(my_map.exit[2]); }
+            if (my_map.x == my_map.exit[0] && my_map.y == my_map.exit[1] && treasures > 0) { ansSide = sides[my_map.exit[2]]; }
             else if (treasures > 0 && rand.Next(t) == 0 && (my_map.exit[0] > -1 ? p[my_map.exit[0], my_map.exit[1]] != null : false))
             {
                 v[0] = my_map.exit[0]; v[1] = my_map.exit[1];
                 Path(v[0], v[1]);
                 choice = 1;
             }
-            else if (Have0(x, y)) ansSide = F(0);
+            else if (Have(UNKNOWN)) ansSide = Random(UNKNOWN);
             else if (notExpl_size > 0)
             {
                 t = rand.Next(rand.Next(notExpl_size)) + 1;
@@ -640,53 +624,34 @@ public class Bot
                 Path(v[0], v[1]);
                 choice = 1;
             }
-            else ansSide = F(1);
+            else ansSide = Random(FREE);
         }
     }
-    protected virtual int Max(int a, int b)
-    {
-        return (a > b) ? a : b;
-    }
-    protected virtual int Min(int a, int b)
-    {
-        return (a < b) ? a : b;
-    }
+    protected virtual int Max(int a, int b) => (a > b) ? a : b;
+    protected virtual int Min(int a, int b) => (a < b) ? a : b;
     protected virtual int SumOut()
     {
         int sum = 0;
         for (int i = 0; i < Players; ++i) sum += Check.treasureOut(i);
         return sum;
     }
-    protected virtual string F(int w)
+    protected string random(int form, int i, int j)
     {
-        int isW(int q) { if (q == w) return 1; else return 0; }
-        int i = my_map.x, j = my_map.y;
-        int sum = isW(Can(i, j, 0)) + isW(Can(i, j, 1)) + isW(Can(i, j, 2)) + isW(Can(i, j, 3)), t;
-        if (sum != 0)
+        int[] val = new int[ARITY];
+        int k = 0;
+        for (int d = 0; d < ARITY; ++d)
+            if (Can(i, j, d) == form)
+                val[k++] = d;
+        if (k > 0)
         {
-            t = rand.Next(sum) + 1;
-            if (t == 1)
-            {
-                if (Can(i, j, 0) == w) return "left";
-                if (Can(i, j, 1) == w) return "down";
-                if (Can(i, j, 2) == w) return "right";
-                if (Can(i, j, 3) == w) return "up";
-            }
-            if (t == 2)
-            {
-                if (Can(i, j, 0) == w && Can(i, j, 1) == w) return "down";
-                if ((Can(i, j, 0) == w || Can(i, j, 1) == w) && Can(i, j, 2) == w) return "right";
-                if (Can(i, j, 3) == w) return "up";
-            }
-            if (t == 3)
-            {
-                if (Can(i, j, 0) == w && Can(i, j, 1) >= w && Can(i, j, 2) == w) return "right";
-                if (Can(i, j, 3) == w) return "up";
-            }
-            if (t == 4)
-                if (Can(i, j, 3) == w) return "up";
+            int t = rand.Next(k);
+            return sides[val[t]];
         }
         return "";
+    }
+    protected virtual string Random(int form)
+    {
+        return random(form, my_map.x, my_map.y);
     }
     protected virtual int GameAns(string s)
     {
@@ -694,91 +659,118 @@ public class Bot
         else if (s == "exit\n" || s == "hit\n") return 2;
         else return 1;
     }
-    public struct Map
+    public class Map
     {
         public int size;
         public int rank;
         public int x, y;
         public int minx, miny, maxx, maxy;
-        public int[,,] can_to_move;
         public int[] exit;
-        public Map(int t)
+        public int[,,] can_to_move;
+        void Init(int Size)
         {
-            size = t;
-            minx = maxx = miny = maxy = x = y = size / 2 - 1;
+            size = Size;
             rank = 0;
+            minx = maxx = miny = maxy = x = y = size / 2 - 1;
             can_to_move = new int[size, size, 2];
-            exit = new int[3];
-            exit[0] = -1;
+            exit = new int[3] { -1, -1, -1 };
         }
-        public void Move(int k)
+        public Map(int Size)
         {
-            if (k == 0) { if (x == minx) --minx; --x; }
-            if (k == 1) { if (y == miny) --miny; --y; }
-            if (k == 2) { if (x == maxx) ++maxx; ++x; }
-            if (k == 3) { if (y == maxy) ++maxy; ++y; }
+            Init(Size);
         }
-        public int Can(int a, int b, int k)
+        public Map copy()
         {
-            int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
-            return can_to_move[a + dx, b + dy, t];
+            return new Map(this);
+        }
+        Map(Map B)
+        {
+            Init(B.size);
+            B.UpdateBorders();
+            rank = B.rank;
+            minx = B.minx; miny = B.miny;
+            maxx = B.maxx; maxy = B.maxy;
+            x = B.x; y = B.y;
+            exit = new int[3] { B.exit[0], B.exit[1], B.exit[2] };
+            for (int i = 0; i < size; ++i)
+                for (int j = 0; j < size; ++j)
+                {
+                    can_to_move[i, j, 0] = B.can_to_move[i, j, 0];
+                    can_to_move[i, j, 1] = B.can_to_move[i, j, 1];
+                }
+        }
+        public void Move(int side)
+        {
+            if (side == LEFT) { if (x == minx) --minx; --x; }
+            if (side == DOWN) { if (y == miny) --miny; --y; }
+            if (side == RIGHT) { if (x == maxx) ++maxx; ++x; }
+            if (side == UP) { if (y == maxy) ++maxy; ++y; }
+        }
+        public int Can(int a, int b, int side)
+        {
+            int dx = (side == RIGHT ? 1 : 0), dy = (side == UP ? 1 : 0);
+            return can_to_move[a + dx, b + dy, side % 2];
         }
         public void UpdateCoord(int a, int b)
         {
             x = a; y = b;
         }
-        public void UpdateCan(int res, int k)
+        public void UpdateCan(int res, int side)
         {
-            int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
-            can_to_move[x + dx, y + dy, t] = res;
+            int dx = (side == RIGHT ? 1 : 0), dy = (side == UP ? 1 : 0);
+            can_to_move[x + dx, y + dy, side % 2] = res;
             rank += res > 0 ? res : -res;
         }
-        public void UpdateCan(int a, int b, int res, int k)
+        public void UpdateCan(int a, int b, int res, int side)
         {
-            int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
-            can_to_move[a + dx, b + dy, t] = res;
+            int dx = (side == RIGHT ? 1 : 0), dy = (side == UP ? 1 : 0);
+            can_to_move[a + dx, b + dy, side % 2] = res;
             rank += res > 0 ? res : -res;
         }
-        public void UpdateExit(int k)
+        public void UpdateExit(int side)
         {
-            exit[0] = x; exit[1] = y; exit[2] = k; UpdateBorders();
+            exit = new int[3] { x, y, side }; UpdateBorders();
         }
-        public void UpdateExit(int a, int b, int k)
+        public void UpdateExit(int a, int b, int side)
         {
-            exit[0] = a; exit[1] = b; exit[2] = k; UpdateBorders();
+            exit = new int[3] { a, b, side }; UpdateBorders();
         }
-        void AddWall(int a, int b, int k)
+        public void AddWall(int a, int b, int side)
         {
-            if (can_to_move[a, b, k] == 0) UpdateCan(a, b, -1, k);
+            if (can_to_move[a, b, side] == UNKNOWN) UpdateCan(a, b, WALL, side);
+        }
+        public void AddFree(int a, int b, int side)
+        {
+            if (can_to_move[a, b, side] == UNKNOWN) UpdateCan(a, b, FREE, side);
         }
         public void UpdateBorders()
         {
             if (exit[0] > -1)
             {
-                int a = exit[0], b = exit[1], k = exit[2], Size = size / 2;
-                bool A = (k == 0 && (a < 0 || a >= 2 * Size || a + Size < 0 || a + Size >= 2 * Size));
-                bool B = (k == 1 && (b < 0 || b >= 2 * Size || b + Size < 0 || b + Size >= 2 * Size));
-                bool C = (k == 2 && (a + 1 < 0 || a + 1 >= 2 * Size || a + 1 - Size < 0 || a + 1 - Size >= 2 * Size));
-                bool D = (k == 3 && (b + 1 < 0 || b + 1 >= 2 * Size || b + 1 - Size < 0 || b + 1 - Size >= 2 * Size));
+                int a = exit[0], b = exit[1], side = exit[2], Size = size / 2;
+                bool A = (side == LEFT && (a < 0 || a >= 2 * Size || a + Size < 0 || a + Size >= 2 * Size));
+                bool B = (side == DOWN && (b < 0 || b >= 2 * Size || b + Size < 0 || b + Size >= 2 * Size));
+                bool C = (side == RIGHT && (a + 1 < 0 || a + 1 >= 2 * Size || a + 1 - Size < 0 || a + 1 - Size >= 2 * Size));
+                bool D = (side == UP && (b + 1 < 0 || b + 1 >= 2 * Size || b + 1 - Size < 0 || b + 1 - Size >= 2 * Size));
                 if (A || B || C || D) exit[0] = -2;
                 else
                 {
-                    if (k == 0 && maxy - miny == Size - 1)
+                    if (side == LEFT && maxy - miny == Size - 1)
                     {
                         for (int i = a; i < a + Size; ++i) { AddWall(i, miny, 1); AddWall(i, miny + Size, 1); }
                         for (int j = miny; j <= maxy; ++j) { AddWall(a, j, 0); AddWall(a + Size, j, 0); }
                     }
-                    if (k == 1 && maxx - minx == Size - 1)
+                    else if (side == DOWN && maxx - minx == Size - 1)
                     {
                         for (int i = minx; i <= maxx; ++i) { AddWall(i, b, 1); AddWall(i, b + Size, 1); }
                         for (int j = b; j < b + Size; ++j) { AddWall(minx, j, 0); AddWall(minx + Size, j, 0); }
                     }
-                    if (k == 2 && maxy - miny == Size - 1)
+                    else if (side == RIGHT && maxy - miny == Size - 1)
                     {
                         for (int i = a + 1 - Size; i < a + 1; ++i) { AddWall(i, miny, 1); AddWall(i, miny + Size, 1); }
                         for (int j = miny; j <= maxy; ++j) { AddWall(a + 1 - Size, j, 0); AddWall(a + 1, j, 0); }
                     }
-                    if (k == 3 && maxx - minx == Size - 1)
+                    else if (side == UP && maxx - minx == Size - 1)
                     {
                         for (int i = minx; i <= maxx; ++i) { AddWall(i, b + 1 - Size, 1); AddWall(i, b + 1, 1); }
                         for (int j = b + 1 - Size; j < b + 1; ++j) { AddWall(minx, j, 0); AddWall(minx + Size, j, 0); }
@@ -790,7 +782,7 @@ public class Bot
         {
             minx = maxx = miny = maxy = x = y = size / 2 - 1;
             can_to_move = new int[size, size, 2];
-            exit[0] = -1;
+            exit = new int[3] { -1, -1, -1 };
             rank = 0;
         }
     }
@@ -798,19 +790,19 @@ public class Bot
     protected bool aftHosp;
     protected virtual Map High(Map A, Map B)
     {
-        if (A.rank < B.rank) return Equating(A, B); else return A;
+        if (A.rank >= B.rank) return A.copy();
+        else return B.copy();
     }
-    protected virtual Map Add(Map A, Map B, int a, int b)
+    protected virtual void Add(Map A, Map B, int a, int b)
     {
         A.UpdateBorders(); B.UpdateBorders();
         for (int i = B.minx - B.x + a; i <= B.maxx + 1 - B.x + a; ++i)
             for (int j = B.miny - B.y + b; j <= B.maxy + 1 - B.y + b; ++j)
             {
-                if (A.x + i < 0 || A.x + i >= 2 * Size || A.y + j < 0 || A.y + j >= 2 * Size)
-                { GetInfoB(); return my_map; }
-                if (A.can_to_move[A.x + i, A.y + j, 0] == 0)
+                if (A.x + i < 0 || A.x + i >= 2 * Size || A.y + j < 0 || A.y + j >= 2 * Size) { GetInfoB(); return; }
+                if (A.can_to_move[A.x + i, A.y + j, 0] == UNKNOWN)
                     A.UpdateCan(A.x + i, A.y + j, B.can_to_move[B.x - a + i, B.y - b + j, 0], 0);
-                if (A.can_to_move[A.x + i, A.y + j, 1] == 0)
+                if (A.can_to_move[A.x + i, A.y + j, 1] == UNKNOWN)
                     A.UpdateCan(A.x + i, A.y + j, B.can_to_move[B.x - a + i, B.y - b + j, 1], 1);
             }
         if (B.exit[0] > -1)
@@ -822,32 +814,17 @@ public class Bot
         NewDFS();
         void DFS(int m, int n)
         {
+            const int l = LEFT, d = DOWN, r = RIGHT, u = UP;
             used[m, n] = true;
             if (m < A.minx) A.minx = m; if (m > A.maxx) A.maxx = m;
             if (n < A.miny) A.miny = n; if (n > A.maxy) A.maxy = n;
-            if (A.Can(m, n, 0) == 1) if (!used[m - 1, n]) DFS(m - 1, n);
-            if (A.Can(m, n, 1) == 1) if (!used[m, n - 1]) DFS(m, n - 1);
-            if (A.Can(m, n, 2) == 1) if (!used[m + 1, n]) DFS(m + 1, n);
-            if (A.Can(m, n, 3) == 1) if (!used[m, n + 1]) DFS(m, n + 1);
+            if (A.Can(m, n, l) == FREE) if (!used[m - 1, n]) DFS(m - 1, n);
+            if (A.Can(m, n, d) == FREE) if (!used[m, n - 1]) DFS(m, n - 1);
+            if (A.Can(m, n, r) == FREE) if (!used[m + 1, n]) DFS(m + 1, n);
+            if (A.Can(m, n, u) == FREE) if (!used[m, n + 1]) DFS(m, n + 1);
         }
         DFS(A.minx, A.miny);
         A.UpdateBorders();
-        return A;
-    }
-    protected virtual Map Equating(Map A, Map B)
-    {
-        B.UpdateBorders();
-        A.minx = B.minx; A.miny = B.miny;
-        A.maxx = B.maxx; A.maxy = B.maxy;
-        A.x = B.x; A.y = B.y; A.rank = B.rank;
-        A.exit[0] = B.exit[0]; A.exit[1] = B.exit[1]; A.exit[2] = B.exit[2];
-        for (int i = 0; i < A.size; ++i)
-            for (int j = 0; j < A.size; ++j)
-            {
-                A.can_to_move[i, j, 0] = B.can_to_move[i, j, 0];
-                A.can_to_move[i, j, 1] = B.can_to_move[i, j, 1];
-            }
-        return A;
     }
     protected virtual Map Merge(Map A, Map B)
     {
@@ -885,13 +862,13 @@ public class Bot
                                 else if (j == Size) { if (C.can_to_move[i, j, 1] == 1) err = 1; }
                                 else if (i == 0)
                                 {
-                                    if (C.can_to_move[i, j, 0] == 1) err = 1;
                                     if (C.can_to_move[i, j, 1] == 0) C.can_to_move[i, j, 1] = 1;
+                                    if (C.can_to_move[i, j, 0] == 1) err = 1;
                                 }
                                 else if (j == 0)
                                 {
-                                    if (C.can_to_move[i, j, 1] == 1) err = 1;
                                     if (C.can_to_move[i, j, 0] == 0) C.can_to_move[i, j, 0] = 1;
+                                    if (C.can_to_move[i, j, 1] == 1) err = 1;
                                 }
                                 else
                                 {
@@ -952,30 +929,27 @@ public class Bot
         if (var == 0 || A.exit[0] == -2) { GetInfoB(); return my_map; }
         else return A;
     }
-    protected virtual bool ConflictRes(int res, int k)
+    protected virtual bool ConflictRes(int res, int side)
     {
-        return Can(my_map.x, my_map.y, k) != res && Can(my_map.x, my_map.y, k) != 0;
+        return Can(my_map.x, my_map.y, side) != res && Can(my_map.x, my_map.y, side) != UNKNOWN;
     }
+    protected virtual bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
     protected virtual bool ConflictWall()
     {
         NewDFS();
         int DFS(int a, int b)
         {
-            int sum = 1;
             used[a, b] = true;
-            if (Have0(a, b)) return 0;
-            if (Can(a, b, 0) == 1) if (!used[a - 1, b]) { int t = DFS(a - 1, b); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, 1) == 1) if (!used[a, b - 1]) { int t = DFS(a, b - 1); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, 2) == 1) if (!used[a + 1, b]) { int t = DFS(a + 1, b); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, 3) == 1) if (!used[a, b + 1]) { int t = DFS(a, b + 1); if (t == 0) return 0; else sum += t; }
+            if (Have(UNKNOWN, a, b)) return 0;
+            int sum = 1, L = LEFT, D = DOWN, R = RIGHT, U = UP;
+            if (Can(a, b, L) == FREE) if (!used[a - 1, b]) { int t = DFS(a - 1, b); if (t == 0) return 0; else sum += t; }
+            if (Can(a, b, D) == FREE) if (!used[a, b - 1]) { int t = DFS(a, b - 1); if (t == 0) return 0; else sum += t; }
+            if (Can(a, b, R) == FREE) if (!used[a + 1, b]) { int t = DFS(a + 1, b); if (t == 0) return 0; else sum += t; }
+            if (Can(a, b, U) == FREE) if (!used[a, b + 1]) { int t = DFS(a, b + 1); if (t == 0) return 0; else sum += t; }
             return sum;
         }
         int res = DFS(my_map.x, my_map.y);
         return (res > 0 && res != Size * Size);
-    }
-    protected virtual bool ConflictMove()
-    {
-        return my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
     }
     protected virtual void UpdateStats()
     {
@@ -988,10 +962,10 @@ public class Bot
     }
     protected virtual void GetInfoB()
     {
-        for (int i = 0; i < Players; ++i) players[i].spy = false;
+        if (IsJam())
+            for (int i = 0; i < Players; ++i) players[i].spy = false;
         aftHosp = false;
-        my_map = Equating(my_map, players[my_id].B);
-        bot_show = true;
+        my_map = players[my_id].B.copy();
         choice = 0;
     }
     public struct player
@@ -1021,7 +995,7 @@ public class Bot
         }
     }
     public player[] players;
-    public virtual bool SmbLosed()
+    protected virtual bool SmbLosed()
     {
         for (int i = 0; i < Players; ++i) if (players[i].treasures > Check.treasures(i)) return true;
         return false;
@@ -1061,7 +1035,7 @@ public class Bot
             if (ConflictWall()) GetInfoB();
             if (choice == 2) choice = 0;
             if (choice == 3 && (Check.treasures(my_id) > treasures || game == 0)) choice = 0;
-            if (aftHosp) hosp_map = Add(hosp_map, players[my_id].B, players[my_id].B.x - hosp_map.x, players[my_id].B.y - hosp_map.y);
+            if (aftHosp) Add(hosp_map, players[my_id].B, players[my_id].B.x - hosp_map.x, players[my_id].B.y - hosp_map.y);
         }
         else
         {
@@ -1074,13 +1048,13 @@ public class Bot
             }
         }
     }
-    public virtual void Update(string ansType_id, string ansSide_id, string gameAns_id, int id)
+    public override void Update(string ansType_id, string ansSide_id, string gameAns_id, int id)
     {
         if (!broken)
         {
             try
             {
-                int game = GameAns(gameAns_id); k = AnsSide_to_int(ansSide_id); bot_show = false;
+                int game = GameAns(gameAns_id); k = side_to_int(ansSide_id);
                 if (gameAns_id == "hit\n")
                 {
                     if (id != my_id)
@@ -1107,7 +1081,7 @@ public class Bot
                                     DFS(hosp_map.minx, hosp_map.miny);
                                     hosp_map = Merge(hosp_map, players[my_id].A);
                                     hosp_map.UpdateCoord(Size - 1, Size - 1);
-                                    players[my_id].B = Equating(players[my_id].B, hosp_map);
+                                    players[my_id].B = hosp_map.copy();
                                     GetInfoB();
                                     UpdateAns();
                                     aftHosp = true;
@@ -1124,12 +1098,12 @@ public class Bot
                                 int dx = 0, dy = 0;
                                 if (k == 0) dx = 1; if (k == 2) dx = -1;
                                 if (k == 1) dy = 1; if (k == 3) dy = -1;
-                                players[my_id].B = Add(players[my_id].B, players[id].B, dx, dy);
+                                Add(players[my_id].B, players[id].B, dx, dy);
                                 if (players[my_id].B.Can(players[my_id].B.x, players[my_id].B.y, (k + 2) % 4) == 0)
                                 {
                                     players[my_id].B.UpdateCan(1, (k + 2) % 4);
                                 }
-                                my_map = Add(my_map, players[my_id].B, 0, 0);
+                                Add(my_map, players[my_id].B, 0, 0);
                                 if (ConflictMove()) GetInfoB();
                                 if (ConflictWall()) GetInfoB();
                             }
@@ -1151,25 +1125,29 @@ public class Bot
                             {
                                 if (Check.treasures(i) == 0 && players[i].armors == 0 && A)
                                 {
-                                    bool B = (players[id].choice != 4 && (id != my_id || choice != 4));
+                                    bool B = players[id].choice != 4 && (id != my_id || choice != 4);
+
+                                    //strike and hit mean that dist(i,id)==1 
                                     if (ansType_id == "strike" && players[i].treasures > 0 && B)
                                     {
                                         int dx = 0, dy = 0;
                                         if (k == 0) dx = -1; if (k == 2) dx = 1;
                                         if (k == 1) dy = -1; if (k == 3) dy = 1;
-                                        players[id].B = Add(players[id].B, players[i].B, dx, dy);
+                                        Add(players[id].B, players[i].B, dx, dy);
                                         if (id == my_id)
                                         {
-                                            my_map = Add(my_map, players[my_id].B, 0, 0);
+                                            Add(my_map, players[my_id].B, 0, 0);
                                             if (ConflictMove()) GetInfoB();
                                             if (ConflictWall()) GetInfoB();
                                         }
                                     }
+
                                     players[i].A = High(players[i].A, players[i].B);
                                     players[i].B.NewLife();
                                     if (players[i].treasures > 0) players[i].aftHosp = true;
                                     else players[i].aftHosp = false;
-                                    Spy_off(i);
+
+                                    Spy_off(i); //Jam
                                 }
                             }
                             else if (A) players[i].choice = 4;
@@ -1183,8 +1161,8 @@ public class Bot
                         {
                             if (ansType_id != "throw")
                             {
-                                if (game == 0) { players[my_id].B.UpdateCan(-1, k); GetInfoB(); } //knife
-                                if (game == 2 && SmbLosed())
+                                if (game == 0) { players[my_id].B.UpdateCan(WALL, k); GetInfoB(); } //lose knife
+                                else if (game == 2 && SmbLosed())
                                 {
                                     if (ansType_id == "strike") choice = 2;
                                     if (ansType_id == "fire") choice = 3;
@@ -1245,9 +1223,12 @@ public class Bot
                                 }
                                 if (players[id].aftHosp)
                                 {
-                                    hosp_map = Add(hosp_map, players[id].B, players[id].B.x - Size + 1, players[id].B.y - Size + 1);
-                                    //players[id].B = Add(players[id].B, hosp_map, Size - 1 - players[id].B.x, Size - 1 - players[id].B.y);
-                                    //if (!players[id].spy) Spy_on(id);
+                                    Add(hosp_map, players[id].B, players[id].B.x - Size + 1, players[id].B.y - Size + 1);
+                                    if (IsJam())
+                                    {
+                                        Add(players[id].B, hosp_map, Size - 1 - players[id].B.x, Size - 1 - players[id].B.y);
+                                        if (!players[id].spy) Spy_on(id);
+                                    }
                                 }
                             }
                             else
@@ -1275,9 +1256,10 @@ public class Bot
                 UpdateStats();
                 TryKill();
             }
-            catch
+            catch (System.Exception e)
             {
                 broken = true;
+                error += e.Message + "\n" + e.StackTrace + "\n";
                 randomAns();
             }
         }
@@ -1285,7 +1267,7 @@ public class Bot
     }
     protected int treasures, treasuresOut, knifes, bullets, armors, crackers;
     //Jam.begin();
-    protected virtual bool IsJam() { return false; }
+    protected virtual bool IsJam() => false;
     protected virtual void Spy_on(int id) { }
     protected virtual void Spy_off(int id) { }
     protected virtual void Spy_d(int a, int b) { }
@@ -1304,21 +1286,18 @@ public class Bot
         }
         int A = Check.knifes(my_id), B = Check.bullets(my_id), C = Check.crackers(my_id);
         int type = massRand(new int[] { A + B + C + 1, A, B, C }), side = rand.Next(4);
-        if (type == 0) ansType = "step";
-        else if (type == 1) ansType = "strike";
-        else if (type == 2) ansType = "fire";
-        else if (type == 3) ansType = "throw";
-        ansSide = Int_to_ansSide(side);
+        ansType = types[type];
+        ansSide = sides[side];
     }
 }
-public class Bot_Alice : Bot
+class Bot_Alice : Bot_v1
 {
     int x, y;
     int[,,] can_to_move = new int[20, 20, 2];
     public override void Join(int the_players, int the_treasures, int the_size, int the_id)
     {
-        ansType = "step";
-        ansSide = Int_to_ansSide(rand.Next(4));
+        ansType = types[STEP];
+        ansSide = sides[rand.Next(ARITY)];
         try
         {
             Players = the_players;
@@ -1329,9 +1308,10 @@ public class Bot_Alice : Bot
             players = new player[the_players];
             knifes = 1;
         }
-        catch
+        catch (System.Exception e)
         {
             broken = true;
+            error += e.Message + "\n" + e.StackTrace + "\n";
         }
     }
     protected override int Can(int a, int b, int side)
@@ -1374,8 +1354,7 @@ public class Bot_Alice : Bot
                     used[to[0], to[1]] = true;
                     q.Enqueue(to);
                     p[to[0], to[1]] = v;
-                    if (Have0(to[0], to[1]) && notExpl_size < 10)
-                    { ++notExpl_size; notExpl[notExpl_size] = to; }
+                    if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10) { ++notExpl_size; notExpl[notExpl_size] = to; }
                 }
             }
         }
@@ -1392,15 +1371,15 @@ public class Bot_Alice : Bot
     }
     protected override void GoToV()
     {
-        if (knifes > 0 && rand.Next(5) == 0 && Have1(x, y)) { ansType = "strike"; ansSide = F(1); }
-        else if (bullets > 0 && rand.Next(5) == 0 && Have1(x, y)) { ansType = "fire"; ansSide = F(1); }
+        if (knifes > 0 && rand.Next(5) == 0 && Have(FREE, x, y)) { ansType = types[STRIKE]; ansSide = Random(FREE); }
+        else if (bullets > 0 && rand.Next(5) == 0 && Have(FREE, x, y)) { ansType = types[FIRE]; ansSide = Random(FREE); }
         else
         {
             --path_size;
             int t = -1;
             int a = path[path_size][0], b = path[path_size][1];
             if (a == x - 1) t = 0; if (b == y - 1) t = 1; if (a == x + 1) t = 2; if (b == y + 1) t = 3;
-            ansType = "step"; ansSide = Int_to_ansSide(t);
+            ansType = types[STEP]; ansSide = sides[t];
             if (v[0] == a && v[1] == b) choice = 0;
         }
     }
@@ -1411,7 +1390,7 @@ public class Bot_Alice : Bot
         if (choice == 1) GoToV();
         if (choice == 2)
         {
-            ansType = "step"; ansSide = Int_to_ansSide(k); choice = 0;
+            ansType = types[STEP]; ansSide = sides[k]; choice = 0;
             if (doubt)
             {
                 path[path_size] = new int[2];
@@ -1422,43 +1401,17 @@ public class Bot_Alice : Bot
         }
     }
     int[] exit = { -1, -1, -1 };
-    protected override string F(int w)
-    {
-        int isW(int q) { if (q == w) return 1; else return 0; }
-        int i = x, j = y;
-        int sum = isW(Can(i, j, 0)) + isW(Can(i, j, 1)) + isW(Can(i, j, 2)) + isW(Can(i, j, 3)), t = rand.Next(sum) + 1;
-        if (t == 1)
-        {
-            if (Can(i, j, 0) == w) return "left";
-            if (Can(i, j, 1) == w) return "down";
-            if (Can(i, j, 2) == w) return "right";
-            if (Can(i, j, 3) == w) return "up";
-        }
-        if (t == 2)
-        {
-            if (Can(i, j, 0) == w && Can(i, j, 1) == w) return "down";
-            if ((Can(i, j, 0) == w || Can(i, j, 1) == w) && Can(i, j, 2) == w) return "right";
-            if (Can(i, j, 3) == w) return "up";
-        }
-        if (t == 3)
-        {
-            if (Can(i, j, 0) == w && Can(i, j, 1) >= w && Can(i, j, 2) == w) return "right";
-            if (Can(i, j, 3) == w) return "up";
-        }
-        if (t == 4)
-            if (Can(i, j, 3) == w) return "up";
-        return "";
-    }
+    protected override string Random(int form) => random(form, x, y);
     bool doubt;
     protected override void UpdateChoice()
     {
         bool A = (x == exit[0]) && (y == exit[1]) && doubt;
-        if (knifes > 0 && rand.Next(5) == 0 && Have1(x, y) && !A) { ansType = "strike"; ansSide = F(1); }
-        else if (bullets > 0 && rand.Next(5) == 0 && Have1(x, y) && !A) { ansType = "fire"; ansSide = F(1); }
+        if (knifes > 0 && rand.Next(5) == 0 && Have(FREE, x, y) && !A) { ansType = "strike"; ansSide = Random(FREE); }
+        else if (bullets > 0 && rand.Next(5) == 0 && Have(FREE, x, y) && !A) { ansType = "fire"; ansSide = Random(FREE); }
         else
         {
             ansType = "step"; int t = Max((Treasures - SumOut()) / 2 - treasures, 1);
-            if ((x == exit[0] && y == exit[1] && treasures > 0) || (x == exit[0] && y == exit[1] && doubt)) { ansSide = Int_to_ansSide(exit[2]); }
+            if ((x == exit[0] && y == exit[1] && treasures > 0) || (x == exit[0] && y == exit[1] && doubt)) { ansSide = sides[exit[2]]; }
             else if (treasures > 0 && exit[0] > -1 && rand.Next(t) == 0)
             {
                 v[0] = exit[0]; v[1] = exit[1];
@@ -1466,7 +1419,7 @@ public class Bot_Alice : Bot
                 Path(v[0], v[1]);
                 choice = 1;
             }
-            else if (Have0(x, y)) ansSide = F(0);
+            else if (Have(UNKNOWN, x, y)) ansSide = Random(UNKNOWN);
             else
             {
                 BFS();
@@ -1477,7 +1430,7 @@ public class Bot_Alice : Bot
                     Path(v[0], v[1]);
                     choice = 1;
                 }
-                else ansSide = F(1);
+                else ansSide = Random(FREE);
             }
         }
     }
@@ -1561,7 +1514,7 @@ public class Bot_Alice : Bot
         {
             try
             {
-                int game = GameAns(gameAns_id); k = AnsSide_to_int(ansSide_id);
+                int game = GameAns(gameAns_id); k = side_to_int(ansSide_id);
                 if (id == my_id)
                 {
                     if (ansType_id != "step") { if (game == 2 && SmbLosed()) choice = 2; if (game == 0 && choice != 4) newLife(); if (choice == 4) choice = 0; }
@@ -1574,9 +1527,9 @@ public class Bot_Alice : Bot
                     {
                         if (ansType_id == "throw")
                         {
-                            if (knifes > 0) { ansType = "strike"; ansSide = (Have1(x, y)) ? F(1) : F(0); }
-                            else if (bullets > 0) { ansType = "fire"; ansSide = (Have1(x, y)) ? F(1) : F(0); }
-                            else { ansType = "step"; ansSide = (HaveWall_or_Exit(x, y)) ? F(-1) : F(0); }
+                            if (knifes > 0) { ansType = "strike"; ansSide = (Have(FREE, x, y)) ? Random(FREE) : Random(UNKNOWN); }
+                            else if (bullets > 0) { ansType = "fire"; ansSide = (Have(FREE, x, y)) ? Random(FREE) : Random(UNKNOWN); }
+                            else { ansType = "step"; ansSide = (Have(WALL, x, y)) ? Random(WALL) : Random(UNKNOWN); }
                             choice = 4;
                         }
                         else if (Check.treasures(my_id) == 0 && armors == 0)
@@ -1601,23 +1554,58 @@ public class Bot_Alice : Bot
                 players[id].treasures = Check.treasures(id);
                 UpdateStats();
             }
-            catch { broken = true; randomAns(); }
+            catch (System.Exception e)
+            {
+                broken = true;
+                randomAns();
+                error += e.Message + "\n" + e.StackTrace + "\n";
+            }
         }
         else randomAns();
     }
-    public override bool SmbLosed()
+    protected override bool SmbLosed()
     {
-        for (int i = 0; i < Players; ++i) if (players[i].treasures > Check.treasures(i)) return true;
+        for (int i = 0; i < Players; ++i)
+            if (players[i].treasures > Check.treasures(i))
+                return true;
         return false;
     }
 }
-public class Bot_Bob : Bot
+class Bot_Bob : Bot_v1
 {
 
 }
-public class Bot_Jam : Bot
+class Bot_Jam : Bot_v1
 {
-    protected override bool IsJam() { return true; }
+    protected void BFS(int[,] ind)
+    {
+        NewBFS();
+        Queue<int[]> q = new Queue<int[]>();
+        int[] s = { my_map.x, my_map.y };
+        q.Enqueue(s);
+        used[s[0], s[1]] = true;
+        int[] null_ = { -1, -1 };
+        p[s[0], s[1]] = null_;
+        while (q.Count > 0 && notExpl_size < 1)
+        {
+            int[] v = q.Dequeue(); int z = v[0], t = v[1];
+            for (int i = 0; i < 4 && notExpl_size < 1; ++i)
+            {
+                int dx = 0, dy = 0; if (i == 0) dx = -1; if (i == 1) dy = -1; if (i == 2) dx = 1; if (i == 3) dy = 1;
+                bool Can = this.Can(z, t, i) == 1;
+                int[] to = { z + dx, t + dy };
+                if (Can && !used[to[0], to[1]])
+                {
+                    used[to[0], to[1]] = true;
+                    q.Enqueue(to);
+                    p[to[0], to[1]] = v;
+                    if (ind[to[0], to[1]] > 0 && notExpl_size < 1)
+                        if (Check.treasures(ind[to[0], to[1]] - 1) > 0) { ++notExpl_size; notExpl[notExpl_size] = to; }
+                }
+            }
+        }
+    }
+    protected override bool IsJam() => true;
     protected int dspy_x, dspy_y, is_spy;
     protected override void Spy_on(int id)
     {
@@ -1628,10 +1616,7 @@ public class Bot_Jam : Bot
             players[id].spy = true; players[id].dspy_x = dspy_x; players[id].dspy_y = dspy_y;
         }
     }
-    protected override void Spy_off(int id)
-    {
-        players[id].spy = false;
-    }
+    protected override void Spy_off(int id) => players[id].spy = false;
     protected override void Spy_d(int a, int b)
     {
         is_spy = 1; dspy_x = a; dspy_y = b;
@@ -1654,7 +1639,7 @@ public class Bot_Jam : Bot
                         int dx = xp - x, dy = yp - y;
                         if (knifes > 0)
                         {
-                            void Win(int xx) { ansSide = Int_to_ansSide(xx); ansType = "strike"; profit = players[i].treasures; choice = 0; hit = true; }
+                            void Win(int xx) { ansSide = sides[xx]; ansType = "strike"; profit = players[i].treasures; choice = 0; hit = true; }
                             if (dx == -1 && dy == 0 && Can(x, y, 0) == 1) { Win(0); continue; }
                             if (dx == 0 && dy == -1 && Can(x, y, 1) == 1) { Win(1); continue; }
                             if (dx == 1 && dy == 0 && Can(x, y, 2) == 1) { Win(2); continue; }
@@ -1662,7 +1647,7 @@ public class Bot_Jam : Bot
                         }
                         if (bullets > 0)
                         {
-                            void Win(int xx) { ansSide = Int_to_ansSide(xx); ansType = "fire"; profit = players[i].treasures; choice = 0; hit = true; }
+                            void Win(int xx) { ansSide = sides[xx]; ansType = "fire"; profit = players[i].treasures; choice = 0; hit = true; }
                             if (dx == 0)
                             {
                                 int pos = y;
@@ -1735,6 +1720,7 @@ public class Bot_Jam : Bot
         }
     }
 }
+
 public struct Player : System.ICloneable
 {
     public string name;
