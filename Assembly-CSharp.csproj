@@ -66,12 +66,15 @@
     <Compile Include="Assets\Scripts\Slider\Slider.cs" />
     <Compile Include="Assets\Scripts\Background\Light.cs" />
     <Compile Include="Assets\Scripts\Map\Map.cs" />
-    <Compile Include="Assets\Scripts\End.cs" />
+    <Compile Include="Assets\Scripts\End\End.cs" />
     <Compile Include="Assets\Scripts\Settings.cs" />
-    <Compile Include="Assets\Scripts\Initialization.cs" />
+    <Compile Include="Assets\Scripts\Initialization\TourInitialization.cs" />
+    <Compile Include="Assets\Scripts\Play\TourPlay.cs" />
+    <Compile Include="Assets\Scripts\Initialization\Initialization.cs" />
     <Compile Include="Assets\my.cs" />
     <Compile Include="Assets\Scripts\Toggle\Toggle.cs" />
     <Compile Include="Assets\WebClient\web\Test.cs" />
+    <Compile Include="Assets\Scripts\InputText\InputNumber.cs" />
     <Compile Include="Assets\Scripts\Menu.cs" />
     <Compile Include="Assets\Scripts\PageSelecter\PageSelecter.cs" />
     <Compile Include="Assets\Scripts\Confirm\Saver.cs" />
@@ -79,13 +82,15 @@
     <Compile Include="Assets\Scripts\RayCast\RayCast.cs" />
     <Compile Include="Assets\Scripts\Map\AnimeFunctions.cs" />
     <Compile Include="Assets\Scripts\Scroller\Scroller.cs" />
-    <Compile Include="Assets\Scripts\Play.cs" />
-    <Compile Include="Assets\Scripts\TourEnd.cs" />
+    <Compile Include="Assets\Scripts\Play\Play.cs" />
+    <Compile Include="Assets\Scripts\End\TourEnd.cs" />
+    <Compile Include="Assets\Scripts\Confirm\Creator.cs" />
     <Compile Include="Assets\Scripts\Multyplayer\MP_Play.cs" />
     <Compile Include="Assets\Scripts\DDOL.cs" />
     <Compile Include="Assets\Scripts\Bots\Bot_v0.cs" />
     <Compile Include="Assets\Scripts\Changer\Changer.cs" />
     <Compile Include="Assets\Scripts\PageSelecter\VariantButton.cs" />
+    <Compile Include="Assets\Scripts\MP_Menu.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro.cginc" />

@@ -9,11 +9,15 @@ public class Confirm : MonoBehaviour
     //_____________________________
     public VoidFunc_Int click_int;
     public int arg_int;
+    //_____________________________
+    public VoidFunc_String click_string;
+    public string arg_string;
 
     void Yes()
     {
         click?.Invoke();
         click_int?.Invoke(arg_int);
+        click_string?.Invoke(arg_string);
         Destroy(gameObject);
     }
 

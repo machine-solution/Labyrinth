@@ -413,6 +413,22 @@ public static class Check
         return Base.currentPosition.players[id].crackers;
     }
 
+    //__________________________________ читы
+    public static Coord position(int id)
+    {
+        return Base.currentPosition.players[id].location;
+    }
+
+    public static bool wall(int side, int x, int y) //side: 0 == down wall, 1 == left wall of (x,y)
+    {
+        return Base.map.walls[side, x, y].getHave();
+    }
+
+    public static Coord positionOfTeleport(int num) // number of teleport in pair
+    {
+        return Base.map.teleport[num];
+    }
+
 }
 
 public class Bot
@@ -2007,7 +2023,7 @@ public static class Base
         size = Size;
         map.size = Size;
         map.walls = new Wall[2, size + 1, size + 1];
-        { // walls initialization
+        { // walls initialization 0 == horizontal, 1 == vertical
             for (int i = 0; i <= size; ++i)
             {
                 for (int j = 0; j <= size; ++j)
@@ -2936,9 +2952,13 @@ public class Main : MonoBehaviour
         SaveTournamentList();
     }
     //__________________________________
+    public string currentScene;
+    public string lastScene;
     [System.Obsolete]
     public void OnScene_Menu()
     {
+        lastScene = currentScene;
+        currentScene = "Menu";
         InputText.act_id = -1;
         Base.is_tournament = false;
         Application.LoadLevel("Menu");
@@ -2947,6 +2967,8 @@ public class Main : MonoBehaviour
     [System.Obsolete]
     public void OnScene_Settings()
     {
+        lastScene = currentScene;
+        currentScene = "Settings";
         InputText.act_id = -1;
         Application.LoadLevel("Settings");
     }
@@ -2954,13 +2976,26 @@ public class Main : MonoBehaviour
     [System.Obsolete]
     public void OnScene_Play()
     {
+        lastScene = currentScene;
+        currentScene = "Play";
         InputText.act_id = -1;
         Application.LoadLevel("Play");
     }
 
     [System.Obsolete]
+    public void OnScene_TourPlay()
+    {
+        lastScene = currentScene;
+        currentScene = "TourPlay";
+        InputText.act_id = -1;
+        Application.LoadLevel("TourPlay");
+    }
+
+    [System.Obsolete]
     public void OnScene_End()
     {
+        lastScene = currentScene;
+        currentScene = "End";
         InputText.act_id = -1;
         Application.LoadLevel("End");
     }
@@ -2968,6 +3003,8 @@ public class Main : MonoBehaviour
     [System.Obsolete]
     public void OnScene_TourEnd()
     {
+        lastScene = currentScene;
+        currentScene = "End";
         InputText.act_id = -1;
         Application.LoadLevel("TourEnd");
     }
@@ -2975,13 +3012,26 @@ public class Main : MonoBehaviour
     [System.Obsolete]
     public void OnScene_Initialization()
     {
+        lastScene = currentScene;
+        currentScene = "Initialization";
         InputText.act_id = -1;
         Application.LoadLevel("Initialization");
     }
 
     [System.Obsolete]
+    public void OnScene_TourInitialization()
+    {
+        lastScene = currentScene;
+        currentScene = "TourInitialization";
+        InputText.act_id = -1;
+        Application.LoadLevel("TourInitialization");
+    }
+
+    [System.Obsolete]
     public void OnScene_Map()
     {
+        lastScene = currentScene;
+        currentScene = "Map";
         InputText.act_id = -1;
         Application.LoadLevel("Map");
     }
@@ -2989,12 +3039,51 @@ public class Main : MonoBehaviour
     [System.Obsolete]
     public void OnScene_Rules()
     {
+        lastScene = currentScene;
+        currentScene = "Rules";
         InputText.act_id = -1;
         Application.LoadLevel("Rules");
     }
 
+    [System.Obsolete]
+    public void OnScene_MP_Menu()
+    {
+        lastScene = currentScene;
+        currentScene = "MP_Menu";
+        InputText.act_id = -1;
+        Application.LoadLevel("MP_Menu");
+    }
+
+    [System.Obsolete]
+    public void OnScene_MP_Join()
+    {
+        lastScene = currentScene;
+        currentScene = "MP_Join";
+        InputText.act_id = -1;
+        Application.LoadLevel("MP_Join");
+    }
+
+    [System.Obsolete]
+    public void OnScene_MP_Play()
+    {
+        lastScene = currentScene;
+        currentScene = "MP_Play";
+        InputText.act_id = -1;
+        Application.LoadLevel("MP_Play");
+    }
+
+    [System.Obsolete]
+    public void OnScene(string scene)
+    {
+        lastScene = currentScene;
+        currentScene = scene;
+        InputText.act_id = -1;
+        Application.LoadLevel(scene);
+    }
+
     void Start()
     {
+        currentScene = "Menu";
         StartCoroutine("Transition");
         LoadGameSettings();
         LoadSoundSettings();

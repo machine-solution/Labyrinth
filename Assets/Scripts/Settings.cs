@@ -23,6 +23,17 @@ public class Settings : MonoBehaviour
     }
 
     [System.Obsolete]
+    public void Back()
+    {
+        if (Base.main.lastScene != "")
+        {
+            Base.main.currentScene = Base.main.lastScene;
+            Base.main.OnScene(Base.main.lastScene);
+            Base.main.lastScene = "";
+        }
+    }
+
+    [System.Obsolete]
     void Start()
     {
         slider_n = GameObject.Find("slider_sol").GetComponent<Slider>();
@@ -32,6 +43,7 @@ public class Settings : MonoBehaviour
         toggle_f_tp = GameObject.Find("toggle_teleport").GetComponent<Toggle>();
         GameObject.Find("SaveBut").GetComponent<Button>().click = SaveSettings;
         GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
+        GameObject.Find("BackBut").GetComponent<Button>().click = Back;
 
         Base.main.LoadGameSettings();
         Base.main.LoadSoundSettings();

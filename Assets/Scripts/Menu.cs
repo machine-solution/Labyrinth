@@ -15,7 +15,7 @@ public class Menu : MonoBehaviour
     void TourGame()
     {
         Base.is_tournament = true;
-        Base.main.OnScene_Initialization();
+        Base.main.OnScene_TourInitialization();
     }
 
     [System.Obsolete]

@@ -32,4 +32,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Rules.unity
     guid: 3bd1f545faf1acf45a12e7a25db6e882
+  - enabled: 1
+    path: Assets/Scenes/TourPlay.unity
+    guid: 5f2baea4e4044b14ab88d50eecee9a17
+  - enabled: 1
+    path: Assets/Scenes/TourInitialization.unity
+    guid: 377821609caeba14793f556729229a9f
+  - enabled: 1
+    path: Assets/Scenes/MP_Menu.unity
+    guid: 8f863b23c9f070449a7c66cb720d9c4d
+  - enabled: 1
+    path: Assets/Scenes/MP_Join.unity
+    guid: b645c21647b518f41904854e50cb2806
   m_configObjects: {}
