@@ -1,0 +1,73 @@
+﻿using UnityEngine;
+class Test: MonoBehaviour
+{
+
+    private void Start()
+    {
+        test_message();
+    }
+
+    static void wait()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        while (Web.res == "")
+            if (watch.ElapsedMilliseconds >= 6000)
+            {
+                Debug.Log("so long ... ");
+                break;
+            }
+    }
+    public static void test_message()
+    {
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Web.create(1, 0);
+            wait();
+            Debug.Log(Web.res);
+
+            Web.join(1, Web.room, "nam", "par");
+            wait();
+            Debug.Log(Web.res);
+
+            Web.rwait();
+            wait();
+            Debug.Log(Web.res);
+
+            string str = "hi!";
+            Web.set(str);
+            wait();
+            Debug.Log(Web.res);
+
+            Web.get();
+            wait();
+            Debug.Log(Web.res);
+
+            Web.exists(Web.room);
+            wait();
+            Debug.Log($"room {Web.room} exists: {Web.res}");
+
+            Web.delete();
+            wait();
+            Debug.Log(Web.res);
+            
+            watch.Stop();
+            Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
+        }
+        catch { Debug.Log("ops"); }
+    }
+    public static void delete_all(int count = 100)
+    {
+        try
+        {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < count; ++i)
+            {
+                Web.delete(i);
+                wait();
+            }
+            Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
+        }
+        catch { Debug.Log("ops"); }
+    }
+}
