@@ -22,11 +22,11 @@ class Test: MonoBehaviour
         try
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            Web.create(1, 0);
+            Web.create(239, 1, 0);
             wait();
             Debug.Log(Web.res);
 
-            Web.join(1, Web.room, "nam", "par");
+            Web.join(1, Web.room, "names");
             wait();
             Debug.Log(Web.res);
 
@@ -46,6 +46,14 @@ class Test: MonoBehaviour
             Web.exists(Web.room);
             wait();
             Debug.Log($"room {Web.room} exists: {Web.res}");
+
+            Web.names();
+            wait();
+            Debug.Log($"Web.names: {Web.res}");
+
+            Web.parms();
+            wait();
+            Debug.Log($"Web.parms: {Web.res}");
 
             Web.delete();
             wait();

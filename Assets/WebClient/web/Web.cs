@@ -47,15 +47,15 @@ public class Web
     public static string res = string.Empty;
     public static int room = 0;
     public static int index = 0;
-    public static void create(int n) => getResponse($"CREATE{sep}{n}");
-    public static void create(int n, int x)
+    public static void create(int par, int n) => getResponse($"CREATE{sep}{par}{sep}{n}");
+    public static void create(int par, int n, int x)
     {
-        getResponse($"CREATEX{sep}{n}{sep}{x}");
+        getResponse($"CREATEX{sep}{par}{sep}{n}{sep}{x}");
         room = x;
     }
-    public static void join(int k, int x, string nam, string par)
+    public static void join(int k, int x, string nam)
     {
-        getResponse($"JOIN{sep}{k}{sep}{x}{sep}{nam}{sep}{par}");
+        getResponse($"JOIN{sep}{k}{sep}{x}{sep}{nam}");
         room = x;
     }
     public static void rwait() => getResponse($"RWAIT{sep}{room}");
