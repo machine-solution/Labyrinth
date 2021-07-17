@@ -1,0 +1,8 @@
+﻿[*.cs]
+
+# IDE0001: Упрощение имен
+dotnet_diagnostic.IDE0001.severity = error
+
+csharp_new_line_before_open_brace = none
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_before_colon_in_inheritance_clause = false

@@ -2,7 +2,4 @@
 bin/
 obj/
 Properties/
-App.config
-Bot.csproj
-Bot.sln
 Main.cs.lnk

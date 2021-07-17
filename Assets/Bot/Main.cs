@@ -42,7 +42,7 @@ class First {
     public static int id = -1, players = 2, human = 0, treasures = 100, size = 5, steps = 0;
     public static string[] name;
     public static Bot[] Alice;
-    public static Map_2 lab;
+    public static Map lab;
     static Random rand = ItMain.rand;
     public static int first() {
         bool withWrLn = false, withPauses = false, Bot_show = false;
@@ -52,8 +52,7 @@ class First {
         was = new bool[2 * size - 1, 2 * size - 1, players];
         name = new string[players];
         Alice = new Bot[players];
-        //lab = new Map(players, treasures, size);
-        lab = new Map_2();
+        lab = new Map();
         for (int i = 0; i < players; ++i) {
             lab.player[i].knifes = 1;
             if (i == -1) lab.player[i].bullets = 100;
@@ -62,7 +61,7 @@ class First {
             Alice[i] = new Bot_Jam();
             Alice[i].Join(players, treasures, size, i);
             name[i] = getName();
-            string[] s = new string[] { "Освальд", "Эдвард", "Барбара", "Рейчел", "Эшли" };
+            // string[] s = new string[] { "Освальд", "Эдвард", "Барбара", "Рейчел", "Эшли" };
             //if (players == s.Length) takeName(s);
         }
         //lab.Show();
@@ -250,7 +249,7 @@ class First {
     }
     public static bool[,,] was = new bool[2 * size - 1, 2 * size - 1, players];
 }
-class Map_2 {
+class Map {
     int[] arsSettings = new int[] { 20, 10, 6, 0 };
     Random rand = ItMain.rand;
     int massRand(int[] mass) {
@@ -285,7 +284,7 @@ class Map_2 {
         player[id].x = x;
         player[id].y = y;
     }
-    public Map_2() {
+    public Map() {
         void ChangeCan(int x, int y, int k, int res) {
             int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
             can[x + dx, y + dy, t] = res;
