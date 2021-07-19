@@ -20,26 +20,28 @@ public class Bot {
 /// <summary> Бот: version 1.5 </summary>
 public class Bot_Bob: Bot {
     /// <summary> Бот: version 1.5 </summary>
-    public Bot_Bob() {}
+    public Bot_Bob() { }
     //constants
     protected const int EXIT = -2, WALL = -1, UNKNOWN = 0, FREE = 1;
 
     //variables
-    //NOT RELOAD
+    // NOT RELOAD //
     protected int Players, Treasures, Size, my_id;
     protected int treasures, treasuresOut, knifes, bullets, armors, crackers;
-    //RELOAD
+    // RELOAD  //
     protected int k, choice;
     protected bool aftHosp;
     public Map hosp_map, my_map;
     public player[] players;
-    //  BFS
+    //    BFS    //
     protected int[] v = new int[2];
     protected int[][] notExpl = new int[11][];
     protected int[,][] p;
     protected int[][] path;
     protected bool[,] used;
     protected int path_size, notExpl_size;
+    //    Jam    //
+    protected int dspy_x, dspy_y, is_spy;
 
     //structures and classes
     public struct player {
@@ -162,7 +164,7 @@ public class Bot_Bob: Bot {
     }
 
     //functions
-    protected virtual void Reload() {
+    protected void Reload() {
         k = choice = 0;
         aftHosp = false;
         hosp_map = my_map = null;
@@ -172,6 +174,7 @@ public class Bot_Bob: Bot {
         p = null;
         path = null;
         used = null;
+        dspy_x = dspy_y = is_spy = 0;
         Join(Players, Treasures, Size, my_id);
         RandomAns();
     }
@@ -197,16 +200,15 @@ public class Bot_Bob: Bot {
                 return i;
         return -1;
     }
-    protected virtual int Can(int a, int b, int k) => my_map.Can(a, b, k);
-    protected virtual bool Have(int form, int a, int b) {
+    protected int Can(int a, int b, int k) => my_map.Can(a, b, k);
+    protected bool Have(int form, int a, int b) {
         for (int i = 0; i < NUMOFSIDES; ++i)
             if (Can(a, b, i) == form)
                 return true;
         return false;
     }
-    protected virtual bool Have(int form) => Have(form, my_map.x, my_map.y);
-    protected virtual bool HaveArs() => knifes != Check.knifes(my_id) || bullets != Check.bullets(my_id) || armors != Check.armors(my_id) || crackers != Check.crackers(my_id);
-    protected virtual void BFS() {
+    protected bool Have(int form) => Have(form, my_map.x, my_map.y);
+    protected void BFS() {
         //init
         used = new bool[2 * Size, 2 * Size];
         p = new int[2 * Size, 2 * Size][];
@@ -242,7 +244,7 @@ public class Bot_Bob: Bot {
             }
         }
     }
-    protected virtual void Path(int a, int b) {
+    protected void Path(int a, int b) {
         path = new int[Size * Size + 1][];
         path_size = 0;
         int[] to = { a, b };
@@ -250,7 +252,7 @@ public class Bot_Bob: Bot {
             path[++path_size] = v;
         }
     }
-    protected virtual void GoToV() {
+    protected void GoToV() {
         int x = my_map.x, y = my_map.y;
         if (knifes > 0 && rand.Next(5) == 0 && Have(FREE)) { ansType = "strike"; ansSide = Random(FREE); choice = 0; }
         else if (bullets > 0 && rand.Next(15) == 0 && Have(FREE)) { ansType = "fire"; ansSide = Random(FREE); choice = 0; }
@@ -269,7 +271,7 @@ public class Bot_Bob: Bot {
             }
         }
     }
-    protected virtual void UpdateAns() {
+    protected void UpdateAns() {
         UpdateStats();
         if (IsJam()) bullets = 0;
         if (choice == 0) UpdateChoice();
@@ -287,7 +289,7 @@ public class Bot_Bob: Bot {
         }
         if (IsJam()) bullets = Check.bullets(my_id);
     }
-    protected virtual void UpdateChoice() {
+    protected void UpdateChoice() {
         if (knifes > 0 && rand.Next(5) == 0 && Have(FREE)) { ansType = "strike"; ansSide = Random(FREE); }
         else if (bullets > 0 && rand.Next(15) == 0 && Have(FREE)) { ansType = "fire"; ansSide = Random(FREE); }
         else {
@@ -308,9 +310,9 @@ public class Bot_Bob: Bot {
             else ansSide = Random(FREE);
         }
     }
-    protected virtual int Max(int a, int b) => (a > b) ? a : b;
-    protected virtual int Min(int a, int b) => (a < b) ? a : b;
-    protected virtual int SumOut() {
+    protected int Max(int a, int b) => (a > b) ? a : b;
+    protected int Min(int a, int b) => (a < b) ? a : b;
+    protected int SumOut() {
         int sum = 0;
         for (int i = 0; i < Players; ++i) sum += Check.treasureOut(i);
         return sum;
@@ -327,16 +329,16 @@ public class Bot_Bob: Bot {
         }
         return "";
     }
-    protected virtual string Random(int form) => random(form, my_map.x, my_map.y);
-    protected virtual int GameAns(string s) {
+    protected string Random(int form) => random(form, my_map.x, my_map.y);
+    protected int GameAns(string s) {
         if (s == "wall\n") return 0;
         else if (s == "exit\n" || s == "hit\n") return 2;
         else return 1;
     }
-    protected virtual Map High(Map A, Map B) {
+    protected Map High(Map A, Map B) {
         return A.rank >= B.rank ? A.copy() : B.copy();
     }
-    protected virtual void Add(Map A, Map B, int a, int b) {
+    protected void Add(Map A, Map B, int a, int b) {
         A.UpdateBorders(); B.UpdateBorders();
         for (int i = B.minx - B.x + a; i <= B.maxx + 1 - B.x + a; ++i)
             for (int j = B.miny - B.y + b; j <= B.maxy + 1 - B.y + b; ++j) {
@@ -365,7 +367,7 @@ public class Bot_Bob: Bot {
         DFS(A.minx, A.miny);
         A.UpdateBorders();
     }
-    protected virtual Map Merge(Map A, Map B) {
+    protected Map Merge(Map A, Map B) {
         A.UpdateBorders(); B.UpdateBorders();
         Map C = new Map(Size + 1);
         int var = 0;
@@ -456,9 +458,9 @@ public class Bot_Bob: Bot {
         A.UpdateBorders();
         if (var == 0 || A.exit[0] == -2) { GetInfoB(); return my_map; } else return A;
     }
-    protected virtual bool ConflictRes(int res, int side) => Can(my_map.x, my_map.y, side) != res && Can(my_map.x, my_map.y, side) != UNKNOWN;
-    protected virtual bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
-    protected virtual bool ConflictWall() {
+    protected bool ConflictRes(int res, int side) => Can(my_map.x, my_map.y, side) != res && Can(my_map.x, my_map.y, side) != UNKNOWN;
+    protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
+    protected bool ConflictWall() {
         used = new bool[2 * Size, 2 * Size]; //init
         int DFS(int a, int b) {
             used[a, b] = true;
@@ -473,7 +475,7 @@ public class Bot_Bob: Bot {
         int res = DFS(my_map.x, my_map.y);
         return (res > 0 && res != Size * Size);
     }
-    protected virtual void UpdateStats() {
+    protected void UpdateStats() {
         treasures = Check.treasures(my_id);
         treasuresOut = Check.treasureOut(my_id);
         knifes = Check.knifes(my_id);
@@ -481,18 +483,18 @@ public class Bot_Bob: Bot {
         armors = Check.armors(my_id);
         crackers = Check.crackers(my_id);
     }
-    protected virtual void GetInfoB() {
+    protected void GetInfoB() {
         if (IsJam())
             for (int i = 0; i < Players; ++i) players[i].spy = false;
         aftHosp = false;
         my_map = players[my_id].B.copy();
         choice = 0;
     }
-    protected virtual bool SmbLosed() {
+    protected bool SmbLosed() {
         for (int i = 0; i < Players; ++i) if (players[i].treasures > Check.treasures(i)) return true;
         return false;
     }
-    protected virtual void UpdateCan_and_xy(int game, int k) //only for "step"
+    protected void UpdateCan_and_xy(int game, int k) //only for "step"
     {
         if (choice != 4) {
             int res;
@@ -753,7 +755,7 @@ public class Bot_Alice: Bot_Bob {
     }
 
     //functions
-    protected override void Reload() {
+    protected new void Reload() {
         k = choice = 0;
         aftHosp = false;
         hosp_map = my_map = null;
@@ -782,7 +784,7 @@ public class Bot_Alice: Bot_Bob {
         players = new player[the_players];
         UpdateStats();
     }
-    protected override int Can(int a, int b, int side) {
+    protected new int Can(int a, int b, int side) {
         int dx = (side == 2 ? 1 : 0), dy = (side == 3 ? 1 : 0); side = (side > 1) ? dy : side;
         return can_to_move[a + dx, b + dy, side];
     }
@@ -792,7 +794,7 @@ public class Bot_Alice: Bot_Bob {
         if (side == 2) ++x;
         if (side == 3) ++y;
     }
-    protected override void BFS() {
+    protected new void BFS() {
         //init
         used = new bool[20, 20];
         p = new int[20, 20][];
@@ -821,13 +823,13 @@ public class Bot_Alice: Bot_Bob {
             }
         }
     }
-    protected override void Path(int x, int y) {
+    protected new void Path(int x, int y) {
         path_size = 0;
         int[] to = { x, y };
         for (int[] v = to; v[0] != -1; v = p[v[0], v[1]])
             path[++path_size] = v;
     }
-    protected override void GoToV() {
+    protected new void GoToV() {
         if (knifes > 0 && rand.Next(5) == 0 && Have(FREE, x, y)) { ansType = types[STRIKE]; ansSide = Random(FREE); }
         else if (bullets > 0 && rand.Next(5) == 0 && Have(FREE, x, y)) { ansType = types[FIRE]; ansSide = Random(FREE); }
         else {
@@ -839,7 +841,7 @@ public class Bot_Alice: Bot_Bob {
             if (v[0] == a && v[1] == b) choice = 0;
         }
     }
-    protected override void UpdateAns() {
+    protected new void UpdateAns() {
         UpdateStats();
         UpdateChoice();
         if (choice == 1) GoToV();
@@ -854,8 +856,8 @@ public class Bot_Alice: Bot_Bob {
         }
         else if (choice > 2) Reload();
     }
-    protected override string Random(int form) => random(form, x, y);
-    protected override void UpdateChoice() {
+    protected new string Random(int form) => random(form, x, y);
+    protected new void UpdateChoice() {
         if (choice == 0) {
             bool A = (x == exit[0]) && (y == exit[1]) && doubt;
             if (knifes > 0 && rand.Next(5) == 0 && Have(FREE, x, y) && !A) { ansType = "strike"; ansSide = Random(FREE); }
@@ -883,7 +885,7 @@ public class Bot_Alice: Bot_Bob {
             }
         }
     }
-    protected override int GameAns(string s) {
+    protected new int GameAns(string s) {
         if (s == "wall\n") return 0;
         else if (s == "exit\n" || s == "hit\n") return 2;
         else return 1;
@@ -906,7 +908,7 @@ public class Bot_Alice: Bot_Bob {
             a = x; b = y;
         }
     }
-    protected override void UpdateCan_and_xy(int game, int k) {
+    protected new void UpdateCan_and_xy(int game, int k) {
         if (choice == 4) {
             if (game != 1) choice = 0;
             else Reload();
@@ -970,7 +972,7 @@ public class Bot_Alice: Bot_Bob {
             Reload();
         }
     }
-    protected override bool SmbLosed() {
+    protected new bool SmbLosed() {
         for (int i = 0; i < Players; ++i)
             if (players[i].treasures > Check.treasures(i))
                 return true;
@@ -1012,7 +1014,6 @@ public class Bot_Jam: Bot_Bob {
         }
     }
     protected override bool IsJam() => true;
-    protected int dspy_x, dspy_y, is_spy;
     protected override void Spy_on(int id) {
         is_spy = 0;
         my_map = Merge(my_map, players[id].B);
