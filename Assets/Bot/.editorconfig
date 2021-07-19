@@ -9,7 +9,7 @@ csharp_space_before_colon_in_inheritance_clause = false
 csharp_style_expression_bodied_methods=true:warning
 
 # CS0660: Тип определяет оператор == или оператор !=, но не переопределяет Object.Equals(object o)
-dotnet_diagnostic.CS0660.severity = suggestion
+dotnet_diagnostic.CS0660.severity = silent
 
 # CS0661: Тип определяет оператор == или оператор !=, но не переопределяет Object.GetHashCode()
 dotnet_diagnostic.CS0661.severity = silent

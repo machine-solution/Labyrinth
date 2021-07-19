@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 
 class ItMain {
-    static int numberOfGames = 20;
+    static int numberOfGames = 500;
     static int steps = 0;
     public static Random rand = new Random();
     static int Main() {
@@ -27,7 +27,7 @@ class ItMain {
                 steps += First.steps / First.players;
             }
             catch (Exception e) {
-                Console.WriteLine($" Game error: {e.Message}");
+                Console.WriteLine($" Game error: {e.Message+"\n"+e.StackTrace}");
             }
         }
         Console.WriteLine($" Среднее число ходов: {steps / numberOfGames}");
@@ -44,9 +44,9 @@ class First {
     public static Map lab;
     static Random rand = ItMain.rand;
     public static int first() {
-        bool withWrLn = false, withPauses = false, Bot_show = false;
+        bool withWrLn = true, withPauses = true, Bot_show = false;
         human = 0;
-        players = 4; treasures = rand.Next(100) + 1; size = rand.Next(2) + 9;
+        players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
         was = new bool[2 * size - 1, 2 * size - 1, players];
         name = new string[players];
@@ -54,7 +54,7 @@ class First {
         lab = new Map();
         for (int i = 0; i < players; ++i) {
             lab.player[i].knifes = 1;
-            lab.player[i].bullets = i == -1 ? 100 : 0;
+            lab.player[i].bullets = i == 0 ? 100 : 0;
             lab.player[i].armors = 0;
             Alice[i] = new Bot_Jam();
             Alice[i].Join(players, treasures, size, i);

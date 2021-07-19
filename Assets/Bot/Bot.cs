@@ -22,7 +22,7 @@ public class Bot_Bob: Bot {
     /// <summary> Бот: version 1.5 </summary>
     public Bot_Bob() { }
     //constants
-    protected const int EXIT = -2, WALL = -1, UNKNOWN = 0, FREE = 1;
+    protected const int EXIT = -2, WALL = -1, UNKNOWN = 0, FREE = 1, MERGE_PRECISION = 2;
 
     //variables
     // NOT RELOAD //
@@ -367,11 +367,14 @@ public class Bot_Bob: Bot {
         DFS(A.minx, A.miny);
         A.UpdateBorders();
     }
-    protected Map Merge(Map A, Map B) {
+    /// <summary>
+    /// Попытка совместить две карты с вероятностью хотя бы 1/k, обновляет первый аргумент
+    /// </summary>
+    protected void Merge(ref Map A, Map B, int k = 1) {
         A.UpdateBorders(); B.UpdateBorders();
         Map C = new Map(Size + 1);
         int var = 0;
-        int gxa = 0, gya = 0, gxb = 0, gyb = 0;
+        List<int> gxa = new List<int>(), gya = new List<int>(), gxb = new List<int>(), gyb = new List<int>();
         int dxa = (A.maxx - A.minx), dya = (A.maxy - A.miny), dxb = (B.maxx - B.minx), dyb = (B.maxy - B.miny);
         for (int ia = 0; ia < Size - dxa; ++ia)
             for (int ja = 0; ja < Size - dya; ++ja)
@@ -424,12 +427,13 @@ public class Bot_Bob: Bot {
 
                         int sum = DFS(0, 0, C);
                         if (sum == Size * Size) {
-                            ++var; gxa = ia; gya = ja; gxb = ib; gyb = jb;
+                            ++var; gxa.Add(ia); gya.Add(ja); gxb.Add(ib); gyb.Add(jb);
                         }
-                        if (var > 1) return A;
+                        if (var > k) return;
                     }
-        if (var == 1) {
-            int x = A.minx - B.minx + gxb - gxa, y = A.miny - B.miny + gyb - gya;
+        if (var > 0) {
+            int r = rand.Next(var);
+            int x = A.minx - B.minx + gxb[r] - gxa[r], y = A.miny - B.miny + gyb[r] - gya[r];
             for (int i = B.minx; i <= B.maxx + 1; ++i)
                 for (int j = B.miny; j <= B.maxy + 1; ++j) {
                     if (A.can_to_move[x + i, y + j, 0] == 0)
@@ -443,20 +447,21 @@ public class Bot_Bob: Bot {
                 A.exit[2] = B.exit[2];
             }
             used = new bool[2 * Size, 2 * Size]; //init
-            void DFS(int a, int b) {
+            void DFS(ref Map map, int a, int b) {
                 used[a, b] = true;
-                if (a < A.minx) A.minx = a; if (a > A.maxx) A.maxx = a;
-                if (b < A.miny) A.miny = b; if (b > A.maxy) A.maxy = b;
-                if (A.Can(a, b, 0) == 1) if (!used[a - 1, b]) DFS(a - 1, b);
-                if (A.Can(a, b, 1) == 1) if (!used[a, b - 1]) DFS(a, b - 1);
-                if (A.Can(a, b, 2) == 1) if (!used[a + 1, b]) DFS(a + 1, b);
-                if (A.Can(a, b, 3) == 1) if (!used[a, b + 1]) DFS(a, b + 1);
+                if (a < map.minx) map.minx = a; if (a > map.maxx) map.maxx = a;
+                if (b < map.miny) map.miny = b; if (b > map.maxy) map.maxy = b;
+                if (map.Can(a, b, 0) == 1) if (!used[a - 1, b]) DFS(ref map, a - 1, b);
+                if (map.Can(a, b, 1) == 1) if (!used[a, b - 1]) DFS(ref map, a, b - 1);
+                if (map.Can(a, b, 2) == 1) if (!used[a + 1, b]) DFS(ref map, a + 1, b);
+                if (map.Can(a, b, 3) == 1) if (!used[a, b + 1]) DFS(ref map, a, b + 1);
             }
-            DFS(A.minx, A.miny);
-            Spy_d(x, y);
+            DFS(ref A, A.minx, A.miny);
+            A.UpdateBorders();
+            if (A.exit[0] == -2) { GetInfoB(); return; }
+            Spy_detect(x, y);
         }
-        A.UpdateBorders();
-        if (var == 0 || A.exit[0] == -2) { GetInfoB(); return my_map; } else return A;
+        else GetInfoB();
     }
     protected bool ConflictRes(int res, int side) => Can(my_map.x, my_map.y, side) != res && Can(my_map.x, my_map.y, side) != UNKNOWN;
     protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
@@ -557,7 +562,7 @@ public class Bot_Bob: Bot {
                                     if (hosp_map.Can(a, b, 3) == 1) if (!used[a, b + 1]) DFS(a, b + 1);
                                 }
                                 DFS(hosp_map.minx, hosp_map.miny);
-                                hosp_map = Merge(hosp_map, players[my_id].A);
+                                Merge(ref hosp_map, players[my_id].B);
                                 hosp_map.UpdateCoord(Size - 1, Size - 1);
                                 players[my_id].B = hosp_map.copy();
                                 GetInfoB();
@@ -643,9 +648,8 @@ public class Bot_Bob: Bot {
                     else choice = 4;
                 }
                 else UpdateCan_and_xy(game, k);
-                my_map = Merge(my_map, players[my_id].A);
-                players[my_id].B = Merge(players[my_id].B, players[my_id].A);
-                players[my_id].A = Merge(players[my_id].A, players[my_id].B);
+                Merge(ref my_map, players[my_id].A, MERGE_PRECISION);
+                Merge(ref players[my_id].A, players[my_id].B, MERGE_PRECISION);
                 UpdateAns();
             }
             else {
@@ -693,10 +697,9 @@ public class Bot_Bob: Bot {
                         }
                     }
                     else { if (players[id].choice == 4) players[id].choice = 0; }
-                    players[my_id].B = Merge(players[my_id].B, players[id].A);
-                    players[my_id].B = Merge(players[my_id].B, players[id].B);
-                    my_map = Merge(my_map, players[id].A);
-                    my_map = Merge(my_map, players[id].B);
+                    Merge(ref players[my_id].B, players[id].B);
+                    Merge(ref my_map, players[id].A, MERGE_PRECISION);
+                    Merge(ref my_map, players[id].B, MERGE_PRECISION);
                     Spy_on(id);
                 }
             }
@@ -714,7 +717,7 @@ public class Bot_Bob: Bot {
     protected virtual bool IsJam() => false;
     protected virtual void Spy_on(int id) { }
     protected virtual void Spy_off(int id) { }
-    protected virtual void Spy_d(int a, int b) { }
+    protected virtual void Spy_detect(int a, int b) { }
     protected virtual void TryKill() { }
     //~Jam
     protected void RandomAns() {
@@ -752,6 +755,20 @@ public class Bot_Alice: Bot_Bob {
     //structures
     new struct player {
         public int treasures;
+    }
+    new struct Map {
+        public int a, b;
+        public int[,,] can;
+        public int[] exit;
+        public Map(int x) {
+            a = b = -1;
+            can = new int[x + 1, x + 1, 2];
+            exit = new int[3];
+            exit[0] = -1;
+        }
+        public void Coord(int x, int y) {
+            a = x; b = y;
+        }
     }
 
     //functions
@@ -894,20 +911,6 @@ public class Bot_Alice: Bot_Bob {
         int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0); k = (k > 1) ? dy : k;
         can_to_move[x + dx, y + dy, k] = res;
     }
-    new struct Map {
-        public int a, b;
-        public int[,,] can;
-        public int[] exit;
-        public Map(int x) {
-            a = b = -1;
-            can = new int[x + 1, x + 1, 2];
-            exit = new int[3];
-            exit[0] = -1;
-        }
-        public void Coord(int x, int y) {
-            a = x; b = y;
-        }
-    }
     protected new void UpdateCan_and_xy(int game, int k) {
         if (choice == 4) {
             if (game != 1) choice = 0;
@@ -1016,13 +1019,13 @@ public class Bot_Jam: Bot_Bob {
     protected override bool IsJam() => true;
     protected override void Spy_on(int id) {
         is_spy = 0;
-        my_map = Merge(my_map, players[id].B);
+        Merge(ref my_map, players[id].B, MERGE_PRECISION);
         if (is_spy == 1) {
             players[id].spy = true; players[id].dspy_x = dspy_x; players[id].dspy_y = dspy_y;
         }
     }
     protected override void Spy_off(int id) => players[id].spy = false;
-    protected override void Spy_d(int a, int b) {
+    protected override void Spy_detect(int a, int b) {
         is_spy = 1; dspy_x = a; dspy_y = b;
     }
     protected override void TryKill() {
@@ -1145,7 +1148,7 @@ public class Bot_v2: Bot {
         public int x, y;
         public point(int X, int Y) { x = X; y = Y; }
         public static bool operator ==(point p1, point p2) => p1.x == p2.x && p1.y == p2.y;
-        public static bool operator !=(point p1, point p2) => (p1.x != p2.x || p1.y != p2.y);
+        public static bool operator !=(point p1, point p2) => p1.x != p2.x || p1.y != p2.y;
         public static implicit operator point(Coord cor) => new point(cor.x, cor.y);
     }
     protected void InitBFS() {
