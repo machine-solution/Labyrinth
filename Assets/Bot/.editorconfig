@@ -9,7 +9,7 @@ csharp_space_before_colon_in_inheritance_clause = false
 csharp_style_expression_bodied_methods=true:warning
 
 # CS0660: Тип определяет оператор == или оператор !=, но не переопределяет Object.Equals(object o)
-dotnet_diagnostic.CS0660.severity = silent
+dotnet_diagnostic.CS0660.severity = suggestion
 
 # CS0661: Тип определяет оператор == или оператор !=, но не переопределяет Object.GetHashCode()
 dotnet_diagnostic.CS0661.severity = silent
@@ -19,7 +19,7 @@ dotnet_diagnostic.IDE1006.severity = silent
 
 # IDE0022: Использовать тело блока для методов
 dotnet_diagnostic.IDE0022.severity = silent
-csharp_new_line_before_else=false
+csharp_new_line_before_else=true
 csharp_style_expression_bodied_methods=true:warning
 csharp_style_expression_bodied_operators=true:warning
 csharp_style_expression_bodied_properties=true:warning

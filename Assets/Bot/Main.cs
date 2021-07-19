@@ -98,10 +98,10 @@ class First {
             }
             for (int i = human; i < players; ++i) {
                 Alice[i].Update(ansType, ansSide, gameAns, id);
-                if (Bot_show) updateBotShow(((Bot_v1)Alice[i]).my_map, i);
+                if (Bot_show) updateBotShow(((Bot_Bob)Alice[i]).my_map, i);
             }
             if (withWrLn) {
-                bot_show(((Bot_v1)Alice[id]).my_map, id);
+                bot_show(((Bot_Bob)Alice[id]).my_map, id);
                 bool[] isEvent = {
                     gameAns == "exit\n" && trs != lab.player[id].treasures,
                     ansType == "strike" && gameAns == "hit\n",
@@ -156,7 +156,7 @@ class First {
         if (withWrLn) if (Console.ReadKey().Key == ConsoleKey.Escape) Process.GetCurrentProcess().Kill();
         return 0;
     }
-    public static void updateBotShow(Bot_v1.Map map, int id) {
+    public static void updateBotShow(Bot_Bob.Map map, int id) {
         for (int i = 0; i < 2 * size - 1; ++i)
             for (int j = 0; j < 2 * size - 1; ++j)
                 was[i, j, id] = false;
@@ -182,19 +182,19 @@ class First {
         else return Name.woman[rand.Next(Name.woman.Length)];
     }
     static string getName(int i) => (i + 1).ToString();
-    public static void bot_show(Bot_v1.Map map, int id) {
+    public static void bot_show(Bot_Bob.Map map, int id) {
         void print(int a) {
             try {
                 Console.WriteLine(
                     $"   treasures {name[players - a]}: {lab.player[players - a].treasures}," +
                     $" out: {lab.player[players - a].treasuresOut}," +
-                    $" my_map.exit: {((Bot_v1)Alice[players - a]).my_map.exit[0] > -1}," +
+                    $" my_map.exit: {((Bot_Bob)Alice[players - a]).my_map.exit[0] > -1}," +
                     $" steps: {steps / players}"
                     );
             }
             catch { Console.WriteLine(" Sorry, there was an error "); }
         }
-        Bot_v1.Map this_map = map;
+        Bot_Bob.Map this_map = map;
         int Size = 2 * size - 1;
         for (int j = 2 * (Size + 1) - 1; j > 0; --j)
             for (int i = 1; i < 2 * (Size + 1); ++i) {
