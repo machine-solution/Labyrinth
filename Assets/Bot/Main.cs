@@ -19,7 +19,7 @@ class ItMain {
         for (int i = 0; i < numberOfGames; ++i) {
             try {
                 games[i] = new First();
-                games[i].show();
+                games[i].launch();
                 if (Bot.error != "") {
                     Console.Write(Bot.error);
                     ++errors;
@@ -38,14 +38,13 @@ class ItMain {
     }
 }
 class First {
-    public int show() => first();
     public static int id = -1, players = 2, human = 0, treasures = 100, size = 5, steps = 0;
     public static string[] name;
     public static Bot[] Alice;
     public static Map lab;
-    static Random rand = ItMain.rand;
-    public static int first() {
-        bool withWrLn = true, withPauses = true, Bot_show = false;
+    static readonly Random rand = ItMain.rand;
+    public int launch() {
+        bool withWrLn = false, withPauses = true, Bot_show = false;
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
@@ -179,8 +178,7 @@ class First {
     }
     static string getName() {
         Random rand = ItMain.rand;
-        if (rand.Next(2) == 0) return Name.man[rand.Next(Name.man.Length)];
-        else return Name.woman[rand.Next(Name.woman.Length)];
+        return rand.Next(2) == 0 ? Name.man[rand.Next(Name.man.Length)] : Name.woman[rand.Next(Name.woman.Length)];
     }
     static string getName(int i) => (i + 1).ToString();
     public static void bot_show(Bot_Bob.Map map, int id) {
@@ -248,8 +246,8 @@ class First {
 }
 class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
-    int[] arsSettings = new int[] { 20, 10, 6, 0 };
-    Random rand = ItMain.rand;
+    readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
+    readonly Random rand = ItMain.rand;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
         sum[0] = 0;
@@ -258,11 +256,11 @@ class Map {
         for (int i = 0; i < mass.Length; ++i) if (sum[i] <= x && x < sum[i + 1]) return i;
         return -1;
     }
-    int players = First.players, treasures = First.treasures, size = First.size;
+    private readonly int players = First.players, treasures = First.treasures, size = First.size;
     Coord ars, hos;
     int arsRecharge = 0, arsNum = -1;
-    int[,,] can = new int[First.size + 1, First.size + 1, 5];
-    int[,] treasure = new int[First.size, First.size];
+    readonly int[,,] can = new int[First.size + 1, First.size + 1, 5];
+    readonly int[,] treasure = new int[First.size, First.size];
     public bool[] killed = new bool[First.players];
     public struct game_player {
         public Coord coord;
