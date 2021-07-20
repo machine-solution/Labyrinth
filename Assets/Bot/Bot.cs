@@ -341,7 +341,7 @@ public class Bot_Bob: Bot {
             case "exit\n": return EXIT;
             case "hit\n": return HIT;
             case "miss\n": return MISS;
-            default: return 1;
+            default: return GO;
         }
     }
     protected Map High(Map A, Map B) {
@@ -503,6 +503,8 @@ public class Bot_Bob: Bot {
         aftHosp = false;
         my_map = players[my_id].B.copy();
         choice = NO_CHOICE;
+        if (ConflictMove() || ConflictWall())
+            Reload();
     }
     protected bool SmbLosed() {
         for (int i = 0; i < Players; ++i) if (players[i].treasures > Check.treasures(i)) return true;
@@ -917,7 +919,7 @@ public class Bot_Alice: Bot_Bob {
             case "exit\n": return EXIT;
             case "hit\n": return HIT;
             case "miss\n": return MISS;
-            default: return 1;
+            default: return GO;
         }
     }
     void updateCan(int res, int k) {

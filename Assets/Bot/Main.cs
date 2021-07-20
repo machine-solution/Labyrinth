@@ -21,7 +21,7 @@ class ItMain {
                 games[i] = new First();
                 games[i].launch();
                 if (Bot.error != "") {
-                    Console.Write(Bot.error);
+                    //Console.Write(Bot.error);
                     ++errors;
                     Bot.error = "";
                 }
@@ -44,7 +44,7 @@ class First {
     public static Map lab;
     static readonly Random rand = ItMain.rand;
     public int launch() {
-        bool withWrLn = false, withPauses = true, Bot_show = false;
+        bool withWrLn = false, withPauses = false, Bot_show = false;
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
@@ -107,13 +107,15 @@ class First {
                     ansType == "strike" && gameAns == "hit\n",
                     ansType == "fire" && gameAns == "hit\n",
                     ansType == "step" && (kn != Check.knifes(id) || bl != Check.bullets(id) ||
-                    ar!=Check.armors(id) || cr!=Check.crackers(id))
+                    ar!=Check.armors(id) || cr!=Check.crackers(id)),
+                    ansType == "step" && lab.HaveTeleport(lab.player[id].coord)
                 };
                 string[] Event = {
                     $" {trs} treasures thrown out by {name[id]}!",
                     $" {name[id]} takes murder with knife!",
                     $" {name[id]} takes murder with fire!",
-                    $" {name[id]} gets weapon from arsenal!"
+                    $" {name[id]} gets weapon from arsenal!",
+                    $" {name[id]} is teleported!"
                 };
                 void printInfo(bool A, string s) {
                     if (A) {
@@ -137,12 +139,17 @@ class First {
                         //Thread.Sleep(3200);
                     }
                 }
-                for (int i = 0; i < Event.Length; ++i) printInfo(isEvent[i], Event[i]);
+                for (int i = 0; i < Event.Length; ++i) 
+                    printInfo(isEvent[i], Event[i]);
 
             }
             //withWrLn = true;
             //if (gameAns == "hit\n" && Alice[id].smbLosed()) Thread.Sleep(SleepTimeAfterGame);
             ++steps;
+            if (steps / players > 1000) {
+                Console.WriteLine(">1000");
+                break;
+            }
             //Thread.Sleep(1000);
 
             //Console.MoveBufferArea(0, 0, 100, 1, 0, 40);
@@ -248,6 +255,7 @@ class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
     readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
     readonly Random rand = ItMain.rand;
+    readonly int teleportsPairs = 1;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
         sum[0] = 0;
@@ -258,6 +266,7 @@ class Map {
     }
     private readonly int players = First.players, treasures = First.treasures, size = First.size;
     Coord ars, hos;
+    Coord[] teleport;
     int arsRecharge = 0, arsNum = -1;
     readonly int[,,] can = new int[First.size + 1, First.size + 1, 5];
     readonly int[,] treasure = new int[First.size, First.size];
@@ -276,20 +285,27 @@ class Map {
         int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
         return can[coord.x + dx, coord.y + dy, t];
     }
-    void Move(int id, int k) {
-        if (k == 0) player[id].coord.x--;
-        if (k == 1) player[id].coord.y--;
-        if (k == 2) player[id].coord.x++;
-        if (k == 3) player[id].coord.y++;
+    void Move(int id, int k) => Move(ref player[id].coord, k);
+    public bool HaveTeleport(Coord coord) {
+        for (int i = 0; i < 2 * teleportsPairs; ++i)
+            if (coord == teleport[i])
+                return true;
+        return false;
     }
-    void Move(ref Coord coord, int k) {
+    void Teleportation(ref Coord coord) {
+        for (int i = 0; i < 2 * teleportsPairs; ++i)
+            if (coord == teleport[i]) {
+                coord = teleport[i % 2 == 0 ? i + 1 : i - 1];
+                break;
+            }
+    }
+    void Move(ref Coord coord, int k, bool teleportFlag = true) {
         if (k == 0) coord.x--;
         if (k == 1) coord.y--;
         if (k == 2) coord.x++;
         if (k == 3) coord.y++;
-    }
-    void Transport(int id, Coord coord) {
-        player[id].coord = coord;
+        if (teleportFlag)
+            Teleportation(ref coord);
     }
     public Map() {
         void ChangeCan(int x, int y, int k, int res) {
@@ -304,6 +320,17 @@ class Map {
         }
         for (int i = 0; i < treasures; ++i) {
             ++treasure[rand.Next(size), rand.Next(size)];
+        }
+        teleport = new Coord[2 * teleportsPairs];
+        int abs(int a) => a >= 0 ? a : -a;
+        for (int i = 0; i < teleportsPairs; ++i) {
+            teleport[2 * i] = new Coord(rand.Next(size), rand.Next(size));
+            do {
+                teleport[2 * i + 1] = new Coord(rand.Next(size), rand.Next(size));
+            }
+            while
+            (abs(teleport[2 * i + 1].x - teleport[2 * i].x)
+            + abs(teleport[2 * i + 1].y - teleport[2 * i].y) <= 1);
         }
         while (!false) {
             for (int y = 0; y < size; ++y) { ChangeCan(0, y, 0, WALL); ChangeCan(size - 1, y, 2, WALL); }
@@ -416,7 +443,7 @@ class Map {
             if (Can(p, k) == FREE) {
                 bool hit = false;
                 Coord knife = p;
-                Move(ref knife, k);
+                Move(ref knife, k, false);
                 for (int i = 0; i < players; ++i) {
                     if (player[i].coord == knife) {
                         hit = true;
@@ -424,8 +451,8 @@ class Map {
                         else {
                             treasure[knife.x, knife.y] += player[i].treasures;
                             player[i].treasures = 0;
+                            player[i].coord = hos;
                             killed[i] = true;
-                            Transport(i, hos);
                         }
                     }
                 }
@@ -440,7 +467,7 @@ class Map {
             bool hit = false;
             Coord bullet = p;
             while (Can(bullet, k) == FREE && !hit) {
-                Move(ref bullet, k);
+                Move(ref bullet, k, false);
                 for (int i = 0; i < players; ++i) {
                     if (player[i].coord == bullet) {
                         hit = true;
@@ -448,11 +475,12 @@ class Map {
                         else {
                             treasure[bullet.x, bullet.y] += player[i].treasures;
                             player[i].treasures = 0;
+                            player[i].coord = hos;
                             killed[i] = true;
-                            Transport(i, hos);
                         }
                     }
                 }
+                Teleportation(ref bullet);
             }
             if (hit) game += "hit\n";
             else game += "miss\n";
@@ -476,8 +504,9 @@ class Map {
                 attempt();
             else
                 while (Can(p, k) == FREE && !hit && t < 2) {
-                    Move(ref cracker, k);
+                    Move(ref cracker, k, false);
                     attempt();
+                    Teleportation(ref cracker);
                     ++t;
                 }
             if (hit) game += "hit\n";
@@ -545,7 +574,9 @@ class Map {
                         }
                     }
                     if (!x) {
-                        if (treasure[i / 2, j / 2] > 0) print(" t ", ConsoleColor.DarkBlue);
+                        Coord coord = new Coord(i / 2, j / 2);
+                        if (HaveTeleport(coord)) print(" T ", ConsoleColor.DarkRed);
+                        else if (treasure[i / 2, j / 2] > 0) print(" t ", ConsoleColor.DarkBlue);
                         else if (ars == new Coord(i / 2, j / 2)) print(" a ", ConsoleColor.Green);
                         else if (hos == new Coord(i / 2, j / 2)) print(" h ", ConsoleColor.Green);
                         else Console.Write(" o ");
