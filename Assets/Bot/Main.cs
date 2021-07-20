@@ -12,7 +12,8 @@ class ItMain {
         if (Console.ReadKey().Key == ConsoleKey.Y) {
             Console.WriteLine(" ");
             numberOfGames = int.Parse(Console.ReadLine());
-        } else Console.WriteLine(" ");
+        }
+        else Console.WriteLine(" ");
 
         First[] games = new First[numberOfGames];
         for (int i = 0; i < numberOfGames; ++i) {
@@ -27,7 +28,7 @@ class ItMain {
                 steps += First.steps / First.players;
             }
             catch (Exception e) {
-                Console.WriteLine($" Game error: {e.Message+"\n"+e.StackTrace}");
+                Console.WriteLine($" Game error: {e.Message + "\n" + e.StackTrace}");
             }
         }
         Console.WriteLine($" Среднее число ходов: {steps / numberOfGames}");
@@ -226,12 +227,14 @@ class First {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write(" I ");
                         Console.ResetColor();
-                    } else {
+                    }
+                    else {
                         if (was[(i - 1) / 2, (j - 1) / 2, id]) {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write(" o ");
                             Console.ResetColor();
-                        } else Console.Write(" o ");
+                        }
+                        else Console.Write(" o ");
                     }
                 if (i == 2 * Size + 1)
                     if (j <= players)
@@ -244,6 +247,7 @@ class First {
     public static bool[,,] was = new bool[2 * size - 1, 2 * size - 1, players];
 }
 class Map {
+    const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
     int[] arsSettings = new int[] { 20, 10, 6, 0 };
     Random rand = ItMain.rand;
     int massRand(int[] mass) {
@@ -255,28 +259,39 @@ class Map {
         return -1;
     }
     int players = First.players, treasures = First.treasures, size = First.size;
-    int hos0, hos1, ars0, ars1;
+    Coord ars, hos;
     int arsRecharge = 0, arsNum = -1;
     int[,,] can = new int[First.size + 1, First.size + 1, 5];
     int[,] treasure = new int[First.size, First.size];
     public bool[] killed = new bool[First.players];
     public struct game_player {
-        public int x, y, treasures, treasuresOut, knifes, bullets, armors, crackers;
+        public Coord coord;
+        public int treasures, treasuresOut, knifes, bullets, armors, crackers;
+        public bool crazy;
     }
     public game_player[] player = new game_player[First.players];
     int Can(int x, int y, int k) {
         int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
         return can[x + dx, y + dy, t];
     }
-    void Move(int k, int id) {
-        if (k == 0) player[id].x--;
-        if (k == 1) player[id].y--;
-        if (k == 2) player[id].x++;
-        if (k == 3) player[id].y++;
+    int Can(Coord coord, int k) {
+        int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0), t = (k > 1) ? dy : k;
+        return can[coord.x + dx, coord.y + dy, t];
     }
-    void Transport(int x, int y, int id) {
-        player[id].x = x;
-        player[id].y = y;
+    void Move(int id, int k) {
+        if (k == 0) player[id].coord.x--;
+        if (k == 1) player[id].coord.y--;
+        if (k == 2) player[id].coord.x++;
+        if (k == 3) player[id].coord.y++;
+    }
+    void Move(ref Coord coord, int k) {
+        if (k == 0) coord.x--;
+        if (k == 1) coord.y--;
+        if (k == 2) coord.x++;
+        if (k == 3) coord.y++;
+    }
+    void Transport(int id, Coord coord) {
+        player[id].coord = coord;
     }
     public Map() {
         void ChangeCan(int x, int y, int k, int res) {
@@ -285,8 +300,7 @@ class Map {
         }
         for (int i = 0; i < players; ++i) {
             player[i] = new game_player {
-                x = rand.Next(size),
-                y = rand.Next(size),
+                coord = new Coord(rand.Next(size), rand.Next(size)),
                 knifes = 1
             };
         }
@@ -294,12 +308,12 @@ class Map {
             ++treasure[rand.Next(size), rand.Next(size)];
         }
         while (!false) {
-            for (int y = 0; y < size; ++y) { ChangeCan(0, y, 0, -1); ChangeCan(size - 1, y, 2, -1); }
-            for (int x = 0; x < size; ++x) { ChangeCan(x, 0, 1, -1); ChangeCan(x, size - 1, 3, -1); }
+            for (int y = 0; y < size; ++y) { ChangeCan(0, y, 0, WALL); ChangeCan(size - 1, y, 2, WALL); }
+            for (int x = 0; x < size; ++x) { ChangeCan(x, 0, 1, WALL); ChangeCan(x, size - 1, 3, WALL); }
             for (int x = 0; x < size; ++x)
                 for (int y = 0; y < size; ++y)
                     for (int k = 0; k < 4; ++k)
-                        if (rand.Next(7) == 0) ChangeCan(x, y, k, -1);
+                        if (rand.Next(WALL_PRECISION) == 0) ChangeCan(x, y, k, WALL);
             bool[,] used = new bool[size, size];
             int DFS(int x, int y) {
                 used[x, y] = true;
@@ -315,33 +329,31 @@ class Map {
                 for (int x = 0; x < size; ++x)
                     for (int y = 0; y < size; ++y)
                         for (int k = 0; k < 4; ++k)
-                            ChangeCan(x, y, k, 0);
+                            ChangeCan(x, y, k, FREE);
         }
-        hos0 = rand.Next(size); hos1 = rand.Next(size);
-        ars0 = rand.Next(size); ars1 = rand.Next(size);
+        ars = new Coord(rand.Next(size), rand.Next(size));
+        hos = new Coord(rand.Next(size), rand.Next(size));
         int xe, ye, ke = rand.Next(4);
         switch (ke) {
             case 0:
                 xe = 0;
                 ye = rand.Next(size);
-                ChangeCan(xe, ye, ke, -2);
+                ChangeCan(xe, ye, ke, EXIT);
                 break;
             case 1:
                 xe = rand.Next(size);
                 ye = 0;
-                ChangeCan(xe, ye, ke, -2);
+                ChangeCan(xe, ye, ke, EXIT);
                 break;
             case 2:
                 xe = size - 1;
                 ye = rand.Next(size);
-                ChangeCan(xe, ye, ke, -2);
+                ChangeCan(xe, ye, ke, EXIT);
                 break;
             case 3:
                 xe = rand.Next(size);
                 ye = size - 1;
-                ChangeCan(xe, ye, ke, -2);
-                break;
-            default:
+                ChangeCan(xe, ye, ke, EXIT);
                 break;
         }
     }
@@ -353,23 +365,26 @@ class Map {
             for (int i = 0; i < s.Length; ++i) if (m == s[i]) return i;
             return -1;
         }
-        int x = player[id].x, y = player[id].y, k = AnsSide_to_int(AnsSide);
         if (arsNum == id) {
             if (arsRecharge > 0) ++arsRecharge;
             if (arsRecharge == 6) arsRecharge = 0;
         }
+        Coord p = player[id].coord;
+        int k = AnsSide_to_int(AnsSide);
+        if (player[id].crazy) { k = rand.Next(4); player[id].crazy = false; }
         if (AnsType == "step") {
-            if (Can(x, y, k) == 0) {
-                Move(k, id);
-                x = player[id].x; y = player[id].y;
-                bool trs = treasure[x, y] > 0, ars = x == ars0 && y == ars1 && arsRecharge == 0;
-                if (!trs && !ars) game += "go\n";
-                if (trs) {
+            if (Can(p, k) == FREE) {
+                Move(id, k);
+                int x = player[id].coord.x, y = player[id].coord.y;
+                bool Trs = treasure[x, y] > 0,
+                    Ars = ars == player[id].coord && arsRecharge == 0;
+                if (!Trs && !Ars) game += "go\n";
+                if (Trs) {
                     game += "treasure " + treasure[x, y].ToString() + "\n";
                     player[id].treasures += treasure[x, y];
                     treasure[x, y] = 0;
                 }
-                if (ars) {
+                if (Ars) {
                     switch (massRand(arsSettings)) {
                         case 0:
                             game += "knife\n";
@@ -387,59 +402,86 @@ class Map {
                             game += "cracker\n";
                             ++player[id].crackers;
                             break;
-                        default:
-                            break;
                     }
                     arsNum = (id + 1) % players;
                     ++arsRecharge;
                 }
-            } else if (Can(x, y, k) == -1) game += "wall\n";
+            }
+            else if (Can(p, k) == WALL) game += "wall\n";
             else {
                 game += "exit\n";
                 player[id].treasuresOut += player[id].treasures;
                 player[id].treasures = 0;
             }
-        } else if (AnsType == "strike") {
-            if (Can(x, y, k) == 0) {
-                Move(k, id);
+        }
+        else if (AnsType == "strike") {
+            if (Can(p, k) == FREE) {
                 bool hit = false;
-                int xp = player[id].x, yp = player[id].y;
+                Coord knife = p;
+                Move(ref knife, k);
                 for (int i = 0; i < players; ++i) {
-                    if (i != id && player[i].x == xp && player[i].y == yp) {
+                    if (player[i].coord == knife) {
                         hit = true;
                         if (player[i].armors > 0) --player[i].armors;
                         else {
-                            treasure[xp, yp] += player[i].treasures;
+                            treasure[knife.x, knife.y] += player[i].treasures;
                             player[i].treasures = 0;
                             killed[i] = true;
-                            Transport(hos0, hos1, i);
+                            Transport(i, hos);
                         }
                     }
                 }
-                Transport(x, y, id);
-                if (hit) { game += "hit\n"; --player[id].knifes; } else game += "miss\n";
-            } else if (Can(x, y, k) == -1) { game += "wall\n"; --player[id].knifes; } else game += "miss\n";
-        } else if (AnsType == "fire") {
+                if (hit) { game += "hit\n"; --player[id].knifes; }
+                else game += "miss\n";
+            }
+            else if (Can(p, k) == WALL) { game += "wall\n"; --player[id].knifes; }
+            else game += "miss\n";
+        }
+        else if (AnsType == "fire") {
             --player[id].bullets;
             bool hit = false;
-            int xp = player[id].x, yp = player[id].y;
-            while (Can(xp, yp, k) == 0 && !hit) {
-                Move(k, id);
-                xp = player[id].x; yp = player[id].y;
+            Coord bullet = p;
+            while (Can(bullet, k) == FREE && !hit) {
+                Move(ref bullet, k);
                 for (int i = 0; i < players; ++i) {
-                    if (i != id && player[i].x == xp && player[i].y == yp) {
+                    if (player[i].coord == bullet) {
                         hit = true;
                         if (player[i].armors > 0) --player[i].armors;
                         else {
-                            treasure[xp, yp] += player[i].treasures;
+                            treasure[bullet.x, bullet.y] += player[i].treasures;
                             player[i].treasures = 0;
                             killed[i] = true;
-                            Transport(hos0, hos1, i);
+                            Transport(i, hos);
                         }
                     }
                 }
             }
-            Transport(x, y, id);
+            if (hit) game += "hit\n";
+            else game += "miss\n";
+        }
+        else if (AnsType == "throw") {
+            --player[id].crackers;
+            bool hit = false;
+            Coord cracker = p;
+            int t = 0;
+            void attempt() {
+                for (int i = 0; i < players; ++i) {
+                    if (player[i].coord == cracker) {
+                        hit = true;
+                        treasure[cracker.x, cracker.y] += player[i].treasures;
+                        player[i].treasures = 0;
+                        player[i].crazy = true;
+                    }
+                }
+            }
+            if (Can(p, k) == WALL)
+                attempt();
+            else
+                while (Can(p, k) == FREE && !hit && t < 2) {
+                    Move(ref cracker, k);
+                    attempt();
+                    ++t;
+                }
             if (hit) game += "hit\n";
             else game += "miss\n";
         }
@@ -498,7 +540,7 @@ class Map {
                 if (i % 2 == 0 && j % 2 == 0) {
                     bool x = false;
                     for (int id = 0; id < players && !x; ++id) {
-                        if (player[id].x == i / 2 && player[id].y == j / 2) {
+                        if (player[id].coord == new Coord(i / 2, j / 2)) {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write(" {0} ", id + 1); x = true;
                             Console.ResetColor();
@@ -506,8 +548,8 @@ class Map {
                     }
                     if (!x) {
                         if (treasure[i / 2, j / 2] > 0) print(" t ", ConsoleColor.DarkBlue);
-                        else if (ars0 == i / 2 && ars1 == j / 2) print(" a ", ConsoleColor.Green);
-                        else if (hos0 == i / 2 && hos1 == j / 2) print(" h ", ConsoleColor.Green);
+                        else if (ars == new Coord(i / 2, j / 2)) print(" a ", ConsoleColor.Green);
+                        else if (hos == new Coord(i / 2, j / 2)) print(" h ", ConsoleColor.Green);
                         else Console.Write(" o ");
                     }
                 }
@@ -540,7 +582,6 @@ public struct Coord: ICloneable {
         x = X;
         y = Y;
     }
-
     public static bool operator ==(Coord cor1, Coord cor2) => (cor1.x == cor2.x && cor1.y == cor2.y);
     public static bool operator !=(Coord cor1, Coord cor2) => (cor1.x != cor2.x || cor1.y != cor2.y);
 
