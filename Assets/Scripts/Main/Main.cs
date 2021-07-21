@@ -435,8 +435,8 @@ public static class Check
 public class Bot
 {
     //constants
-    protected static readonly string[] types = { "step", "strike", "fire", "throw" };
-    protected static readonly string[] sides = { "left", "down", "right", "up" };
+    protected static readonly List<string> types = new List<string> { "step", "strike", "fire", "throw" };
+    protected static readonly List<string> sides = new List<string> { "left", "down", "right", "up" };
     protected const int STEP = 0, STRIKE = 1, FIRE = 2, THROW = 3;
     protected const int LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3, NUMOFSIDES = 4;
 
@@ -1267,6 +1267,7 @@ public class Bot_Bob : Bot
             players[id].UpdateStats();
             UpdateStats();
             TryKill();
+            if (!types.Contains(ansType) || !sides.Contains(ansSide)) RandomAns();
         }
         catch (System.Exception e)
         {
@@ -1579,6 +1580,7 @@ public class Bot_Alice : Bot_Bob
             }
             players[id].treasures = Check.treasures(id);
             UpdateStats();
+            if (!types.Contains(ansType) || !sides.Contains(ansSide)) RandomAns();
         }
         catch (System.Exception e)
         {

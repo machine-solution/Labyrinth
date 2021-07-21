@@ -17,7 +17,7 @@ class ItMain {
 
         First[] games = new First[numberOfGames];
         for (int i = 0; i < numberOfGames; ++i) {
-            try {
+            //try {
                 games[i] = new First();
                 games[i].launch();
                 if (Bot.error != "") {
@@ -26,10 +26,10 @@ class ItMain {
                     Bot.error = "";
                 }
                 steps += First.steps / First.players;
-            }
-            catch (Exception e) {
-                Console.WriteLine($" Game error: {e.Message + "\n" + e.StackTrace}");
-            }
+            //}
+            //catch (Exception e) {
+               // Console.WriteLine($" Game error: {e.Message + "\n" + e.StackTrace}");
+            //}
         }
         Console.WriteLine($" Среднее число ходов: {steps / numberOfGames}");
         Console.WriteLine($" Число ошибок: {errors} из {numberOfGames}");
@@ -255,7 +255,7 @@ class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
     readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
     readonly Random rand = ItMain.rand;
-    readonly int teleportsPairs = 1;
+    readonly int teleportsPairs = 0;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
         sum[0] = 0;
