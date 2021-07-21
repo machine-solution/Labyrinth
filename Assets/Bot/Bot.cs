@@ -40,11 +40,11 @@ public class Bot_Bob: Bot {
     public Player[] players;
     //    BFS    //
     protected int[] v = new int[2];
-    protected int[][] notExpl = new int[11][];
+    protected int[][] notExpl = new int[11][], notWas = new int[11][];
     protected int[,][] p;
     protected int[][] path;
     protected bool[,] used;
-    protected int path_size, notExpl_size;
+    protected int path_size, notExpl_size, notWas_size;
     //    Jam    //
     protected int dspy_x, dspy_y, is_spy;
 
@@ -74,12 +74,17 @@ public class Bot_Bob: Bot {
         public int minx, miny, maxx, maxy;
         public int[,,] can_to_move;
         public int[] exit;
-        void Init(int Size) {
-            size = Size;
+        public bool[,] was;
+        public void NewLife() {
             rank = 0;
-            minx = maxx = miny = maxy = x = y = size / 2 - 1;
+            x = y = minx = maxx = miny = maxy = size / 2 - 1;
             can_to_move = new int[size, size, 2];
             exit = new int[3] { -1, -1, -1 };
+            was = new bool[size, size];
+        }
+        void Init(int Size) {
+            size = Size;
+            NewLife();
         }
         public Map(int Size) => Init(Size);
         public Map copy() => new Map(this);
@@ -102,6 +107,7 @@ public class Bot_Bob: Bot {
             if (side == DOWN) { if (y == miny) --miny; --y; }
             if (side == RIGHT) { if (x == maxx) ++maxx; ++x; }
             if (side == UP) { if (y == maxy) ++maxy; ++y; }
+            was[x, y] = true;
         }
         public int Can(int a, int b, int side) {
             int dx = (side == RIGHT ? 1 : 0), dy = (side == UP ? 1 : 0);
@@ -160,12 +166,6 @@ public class Bot_Bob: Bot {
                 }
             }
         }
-        public void NewLife() {
-            minx = maxx = miny = maxy = x = y = size / 2 - 1;
-            can_to_move = new int[size, size, 2];
-            exit = new int[3] { -1, -1, -1 };
-            rank = 0;
-        }
     }
 
     //functions
@@ -175,10 +175,7 @@ public class Bot_Bob: Bot {
         hosp_map = my_map = null;
         players = null;
         v = new int[2];
-        notExpl = new int[11][];
-        p = null;
-        path = null;
-        used = null;
+        InitBFS();
         dspy_x = dspy_y = is_spy = 0;
         Join(Players, Treasures, Size, my_id);
         RandomAns();
@@ -205,7 +202,7 @@ public class Bot_Bob: Bot {
                 return i;
         return -1;
     }
-    protected int Can(int a, int b, int k) => my_map.Can(a, b, k);
+    protected virtual int Can(int a, int b, int k) => my_map.Can(a, b, k);
     protected bool Have(int form, int a, int b) {
         for (int i = 0; i < NUMOFSIDES; ++i)
             if (Can(a, b, i) == form)
@@ -214,11 +211,7 @@ public class Bot_Bob: Bot {
     }
     protected bool Have(int form) => Have(form, my_map.x, my_map.y);
     protected void BFS() {
-        //init
-        used = new bool[2 * Size, 2 * Size];
-        p = new int[2 * Size, 2 * Size][];
-        notExpl = new int[11][];
-        notExpl_size = 0;
+        InitBFS();
 
         Queue<int[]> q = new Queue<int[]>();
         int[] s = { my_map.x, my_map.y };
@@ -245,9 +238,18 @@ public class Bot_Bob: Bot {
                     p[to[0], to[1]] = v;
                     if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10)
                         notExpl[++notExpl_size] = to;
+                    if (!my_map.was[to[0], to[1]] && notWas_size < 10)
+                        notWas[++notWas_size] = to;
                 }
             }
         }
+    }
+    private void InitBFS() {
+        used = new bool[2 * Size, 2 * Size];
+        p = new int[2 * Size, 2 * Size][];
+        notExpl = new int[11][];
+        notWas = new int[11][];
+        notExpl_size = notWas_size = path_size = 0;
     }
     protected void Path(int a, int b) {
         path = new int[Size * Size + 1][];
@@ -306,13 +308,26 @@ public class Bot_Bob: Bot {
                 choice = EXPLORE;
             }
             else if (Have(UNKNOWN)) ansSide = Random(UNKNOWN);
-            else if (notExpl_size > 0) {
-                t = rand.Next(rand.Next(notExpl_size)) + 1;
-                v[0] = notExpl[t][0]; v[1] = notExpl[t][1];
-                Path(v[0], v[1]);
-                choice = EXPLORE;
+            else {
+                int a = notExpl_size > 0 ? 1 : 0,
+                    b = notWas_size > 0 ? 2 : 0,
+                    c = a + b == 0 ? 1 : 0;
+                switch (massRand(new int[] { a, b, c })) {
+                    case 0:
+                        t = rand.Next(rand.Next(notExpl_size)) + 1;
+                        v[0] = notExpl[t][0]; v[1] = notExpl[t][1];
+                        Path(v[0], v[1]);
+                        choice = EXPLORE;
+                        break;
+                    case 1:
+                        t = rand.Next(rand.Next(notWas_size)) + 1;
+                        v[0] = notWas[t][0]; v[1] = notWas[t][1];
+                        Path(v[0], v[1]);
+                        choice = EXPLORE;
+                        break;
+                    default: ansSide = Random(FREE); break;
+                }
             }
-            else ansSide = Random(FREE);
         }
     }
     protected int Max(int a, int b) => (a > b) ? a : b;
@@ -352,6 +367,8 @@ public class Bot_Bob: Bot {
         for (int i = B.minx - B.x + a; i <= B.maxx + 1 - B.x + a; ++i)
             for (int j = B.miny - B.y + b; j <= B.maxy + 1 - B.y + b; ++j) {
                 if (A.x + i < 0 || A.x + i >= 2 * Size || A.y + j < 0 || A.y + j >= 2 * Size) { GetInfoB(); return; }
+                if (B.was[B.x - a + i, B.y - b + j])
+                    A.was[A.x + i, A.y + j] = B.was[B.x - a + i, B.y - b + j];
                 if (A.can_to_move[A.x + i, A.y + j, 0] == UNKNOWN)
                     A.UpdateCan(A.x + i, A.y + j, B.can_to_move[B.x - a + i, B.y - b + j, 0], 0);
                 if (A.can_to_move[A.x + i, A.y + j, 1] == UNKNOWN)
@@ -445,6 +462,8 @@ public class Bot_Bob: Bot {
             int x = A.minx - B.minx + gxb[r] - gxa[r], y = A.miny - B.miny + gyb[r] - gya[r];
             for (int i = B.minx; i <= B.maxx + 1; ++i)
                 for (int j = B.miny; j <= B.maxy + 1; ++j) {
+                    if (B.was[i, j])
+                        A.was[x + i, y + j] = B.was[i, j];
                     if (A.can_to_move[x + i, y + j, 0] == 0)
                         A.UpdateCan(x + i, y + j, B.can_to_move[i, j, 0], 0);
                     if (A.can_to_move[x + i, y + j, 1] == 0)
@@ -529,8 +548,12 @@ public class Bot_Bob: Bot {
                 players[my_id].B.Move(k);
             }
             if (gameAns == EXIT) {
-                res = -2;
-                if (ConflictRes(res, k)) GetInfoB();
+                res = EXIT;
+                if (ConflictRes(res, k)) {
+                    GetInfoB();
+                    if (ConflictRes(res, k))
+                        Reload();
+                }
                 my_map.UpdateCan(res, k);
                 my_map.UpdateExit(k);
                 if (my_map.exit[0] == -2) GetInfoB();
@@ -540,7 +563,7 @@ public class Bot_Bob: Bot {
             if (ConflictMove()) GetInfoB();
             if (ConflictWall()) GetInfoB();
             if (choice == TAKE_AFTER_STRIKE) choice = NO_CHOICE;
-            if (choice == TAKE_AFTER_FIRE && (Check.treasures(my_id) > treasures || gameAns == WALL)) choice = NO_CHOICE;
+            if (choice == TAKE_AFTER_FIRE && (Check.treasures(my_id) > treasures || gameAns != GO)) choice = NO_CHOICE;
             if (aftHosp) Add(hosp_map, players[my_id].B, players[my_id].B.x - hosp_map.x, players[my_id].B.y - hosp_map.y);
         }
         else {
@@ -732,15 +755,15 @@ public class Bot_Bob: Bot {
     protected virtual void Spy_detect(int a, int b) { }
     protected virtual void TryKill() { }
     //~Jam
+    protected int massRand(int[] mr) {
+        int[] sum = new int[mr.Length + 1];
+        sum[0] = 0;
+        for (int i = 0; i < mr.Length; ++i) sum[i + 1] = sum[i] + mr[i];
+        int x = rand.Next(sum[mr.Length]);
+        for (int i = 0; i < mr.Length; ++i) if (sum[i] <= x && x < sum[i + 1]) return i;
+        return -1;
+    }
     protected void RandomAns() {
-        int massRand(int[] mr) {
-            int[] sum = new int[mr.Length + 1];
-            sum[0] = 0;
-            for (int i = 0; i < mr.Length; ++i) sum[i + 1] = sum[i] + mr[i];
-            int x = rand.Next(sum[mr.Length]);
-            for (int i = 0; i < mr.Length; ++i) if (sum[i] <= x && x < sum[i + 1]) return i;
-            return -1;
-        }
         int A = Check.knifes(my_id), B = Check.bullets(my_id), C = Check.crackers(my_id);
         int type = massRand(new int[] { A + B + C + 1, A, B, C }), side = rand.Next(4);
         ansType = types[type];
@@ -753,34 +776,16 @@ public class Bot_Alice: Bot_Bob {
     public Bot_Alice() { }
     //variables
     new Player[] players;
-    new int[] v = new int[2];
-    new int[][] notExpl = new int[11][];
-    new int[,][] p = new int[20, 20][];
-    new int[][] path = new int[101][];
-    new bool[,] used = new bool[20, 20];
-    new int path_size, notExpl_size;
     int x, y;
     int[,,] can_to_move = new int[20, 20, 2];
     int[] exit = { -1, -1, -1 };
     bool doubt;
+    bool[,] was;
+
 
     //structures
     new struct Player {
         public int treasures;
-    }
-    new struct Map {
-        public int a, b;
-        public int[,,] can;
-        public int[] exit;
-        public Map(int x) {
-            a = b = -1;
-            can = new int[x + 1, x + 1, 2];
-            exit = new int[3];
-            exit[0] = -1;
-        }
-        public void Coord(int x, int y) {
-            a = x; b = y;
-        }
     }
 
     //functions
@@ -790,11 +795,7 @@ public class Bot_Alice: Bot_Bob {
         hosp_map = my_map = null;
         players = null;
         v = new int[2];
-        notExpl = new int[11][];
-        p = new int[20, 20][];
-        path = new int[101][];
-        used = new bool[20, 20];
-        path_size = notExpl_size = 0;
+        InitBFS();
         exit = new int[] { -1, -1, -1 };
         x = y = 0;
         can_to_move = new int[20, 20, 2];
@@ -811,9 +812,10 @@ public class Bot_Alice: Bot_Bob {
         my_id = the_id;
         x = y = 9;
         players = new Player[the_players];
+        was = new bool[20, 20];
         UpdateStats();
     }
-    protected new int Can(int a, int b, int side) {
+    protected override int Can(int a, int b, int side) {
         int dx = (side == 2 ? 1 : 0), dy = (side == 3 ? 1 : 0); side = (side > 1) ? dy : side;
         return can_to_move[a + dx, b + dy, side];
     }
@@ -822,13 +824,10 @@ public class Bot_Alice: Bot_Bob {
         if (side == 1) --y;
         if (side == 2) ++x;
         if (side == 3) ++y;
+        was[x, y] = true;
     }
     protected new void BFS() {
-        //init
-        used = new bool[20, 20];
-        p = new int[20, 20][];
-        path = new int[101][];
-        notExpl_size = path_size = 0;
+        InitBFS();
 
         Queue<int[]> q = new Queue<int[]>();
         int[] s = { x, y };
@@ -848,9 +847,19 @@ public class Bot_Alice: Bot_Bob {
                     p[to[0], to[1]] = v;
                     if (Have(UNKNOWN, to[0], to[1]) && notExpl_size < 10)
                         notExpl[++notExpl_size] = to;
+                    if (!was[to[0], to[1]] && notWas_size < 10)
+                        notWas[++notWas_size] = to;
                 }
             }
         }
+    }
+    private void InitBFS() {
+        used = new bool[20, 20];
+        p = new int[20, 20][];
+        path = new int[101][];
+        notExpl = new int[11][];
+        notWas = new int[11][];
+        notExpl_size = notWas_size = path_size = 0;
     }
     protected new void Path(int x, int y) {
         path_size = 0;
@@ -903,13 +912,24 @@ public class Bot_Alice: Bot_Bob {
                 else if (Have(UNKNOWN, x, y)) ansSide = Random(UNKNOWN);
                 else {
                     BFS();
-                    if (notExpl_size > 0) {
-                        t = rand.Next(rand.Next(notExpl_size)) + 1;
-                        v[0] = notExpl[t][0]; v[1] = notExpl[t][1];
-                        Path(v[0], v[1]);
-                        choice = EXPLORE;
+                    int a = notExpl_size > 0 ? 1 : 0,
+                        b = notWas_size > 0 ? 2 : 0,
+                        c = a + b == 0 ? 1 : 0;
+                    switch (massRand(new int[] { a, b, c })) {
+                        case 0:
+                            t = rand.Next(rand.Next(notExpl_size)) + 1;
+                            v[0] = notExpl[t][0]; v[1] = notExpl[t][1];
+                            Path(v[0], v[1]);
+                            choice = EXPLORE;
+                            break;
+                        case 1:
+                            t = rand.Next(rand.Next(notWas_size)) + 1;
+                            v[0] = notWas[t][0]; v[1] = notWas[t][1];
+                            Path(v[0], v[1]);
+                            choice = EXPLORE;
+                            break;
+                        default: ansSide = Random(FREE); break;
                     }
-                    else ansSide = Random(FREE);
                 }
             }
         }
@@ -923,7 +943,7 @@ public class Bot_Alice: Bot_Bob {
             default: return GO;
         }
     }
-    void updateCan(int res, int k) {
+    protected void updateCan(int res, int k) {
         int dx = (k == 2 ? 1 : 0), dy = (k == 3 ? 1 : 0); k = (k > 1) ? dy : k;
         can_to_move[x + dx, y + dy, k] = res;
     }

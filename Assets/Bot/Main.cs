@@ -21,7 +21,7 @@ class ItMain {
                 games[i] = new First();
                 games[i].launch();
                 if (Bot.error != "") {
-                    //Console.Write(Bot.error);
+                    Console.Write(Bot.error);
                     ++errors;
                     Bot.error = "";
                 }
@@ -44,7 +44,7 @@ class First {
     public static Map lab;
     static readonly Random rand = ItMain.rand;
     public int launch() {
-        bool withWrLn = false, withPauses = false, Bot_show = false;
+        bool withWrLn = false, withPauses = true, Bot_show = false;
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
@@ -234,7 +234,7 @@ class First {
                         Console.ResetColor();
                     }
                     else {
-                        if (was[(i - 1) / 2, (j - 1) / 2, id]) {
+                        if (map.was[(i - 1) / 2, (j - 1) / 2]) {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write(" o ");
                             Console.ResetColor();
