@@ -60,7 +60,7 @@ class First {
             new Bot_Bob(),
             new Bot_Jam()
         };
-        lab = new Map() { 
+        lab = new Map() {
             teleportsPairs = 0
         };
         for (int i = 0; i < players; ++i) {
@@ -334,31 +334,58 @@ class Map {
         }
         for (int i = 0; i < players; ++i) {
             player[i] = new game_player {
-                coord = new Coord(rand.Next(size), rand.Next(size)),
-                knifes = 1
+                coord = new Coord(rand.Next(size), rand.Next(size))
             };
         }
         for (int i = 0; i < treasures; ++i) {
             ++treasure[rand.Next(size), rand.Next(size)];
         }
         teleport = new Coord[2 * teleportsPairs];
-        int abs(int a) => a >= 0 ? a : -a;
+        /******************************************************************************
+         *                                                             ___            *
+         * it doesn't work for teleportsPairs>1, just imagine this:   | 1   2 ___     *
+         *                                                             ̅ ̅ ̅   1  2 |    *
+         *                                                                    ̅ ̅ ̅      *
+         ******************************************************************************/
         for (int i = 0; i < teleportsPairs; ++i) {
-            teleport[2 * i] = new Coord(rand.Next(size), rand.Next(size));
-            do {
-                teleport[2 * i + 1] = new Coord(rand.Next(size), rand.Next(size));
-            }
-            while
-            (abs(teleport[2 * i + 1].x - teleport[2 * i].x)
-            + abs(teleport[2 * i + 1].y - teleport[2 * i].y) <= 1);
+            Coord t1 = new Coord(rand.Next(size), rand.Next(size)), t2;
+            do t2 = new Coord(rand.Next(size), rand.Next(size));
+            while (Coord.Dist(t1, t2) <= 1);
+            teleport[2 * i] = t1;
+            teleport[2 * i + 1] = t2;
         }
-        while (!false) {
+        do {
+            InitFree();
+            InitWall();
+        } while (!IsConnected());
+        ars = new Coord(rand.Next(size), rand.Next(size));
+        hos = new Coord(rand.Next(size), rand.Next(size));
+        int xe=0, ye=0, ke = rand.Next(4);
+        switch (ke) {
+            case 0: xe = 0; ye = rand.Next(size); break;
+            case 1: xe = rand.Next(size); ye = 0; break;
+            case 2: xe = size - 1; ye = rand.Next(size); break;
+            case 3: xe = rand.Next(size); ye = size - 1; break;
+        }
+        ChangeCan(xe, ye, ke, EXIT);
+
+        void InitWall() {
             for (int y = 0; y < size; ++y) { ChangeCan(0, y, 0, WALL); ChangeCan(size - 1, y, 2, WALL); }
             for (int x = 0; x < size; ++x) { ChangeCan(x, 0, 1, WALL); ChangeCan(x, size - 1, 3, WALL); }
             for (int x = 0; x < size; ++x)
                 for (int y = 0; y < size; ++y)
                     for (int k = 0; k < 4; ++k)
                         if (rand.Next(WALL_PRECISION) == 0) ChangeCan(x, y, k, WALL);
+        }
+
+        void InitFree() {
+            for (int x = 0; x < size; ++x)
+                for (int y = 0; y < size; ++y)
+                    for (int k = 0; k < 4; ++k)
+                        ChangeCan(x, y, k, FREE);
+        }
+        
+        bool IsConnected() {
             bool[,] used = new bool[size, size];
             int DFS(int x, int y) {
                 used[x, y] = true;
@@ -369,39 +396,10 @@ class Map {
                 if (Can(x, y, 3) == 0) if (!used[x, y + 1]) sum += DFS(x, y + 1);
                 return sum;
             }
-            if (DFS(0, 0) == size * size) break;
-            else
-                for (int x = 0; x < size; ++x)
-                    for (int y = 0; y < size; ++y)
-                        for (int k = 0; k < 4; ++k)
-                            ChangeCan(x, y, k, FREE);
-        }
-        ars = new Coord(rand.Next(size), rand.Next(size));
-        hos = new Coord(rand.Next(size), rand.Next(size));
-        int xe, ye, ke = rand.Next(4);
-        switch (ke) {
-            case 0:
-                xe = 0;
-                ye = rand.Next(size);
-                ChangeCan(xe, ye, ke, EXIT);
-                break;
-            case 1:
-                xe = rand.Next(size);
-                ye = 0;
-                ChangeCan(xe, ye, ke, EXIT);
-                break;
-            case 2:
-                xe = size - 1;
-                ye = rand.Next(size);
-                ChangeCan(xe, ye, ke, EXIT);
-                break;
-            case 3:
-                xe = rand.Next(size);
-                ye = size - 1;
-                ChangeCan(xe, ye, ke, EXIT);
-                break;
+            return DFS(0, 0) == size * size;
         }
     }
+
     public string GameAns(string AnsType, string AnsSide, int id) {
         string game = "";
         for (int i = 0; i < players; ++i) killed[i] = false;
@@ -638,6 +636,9 @@ public struct Coord: ICloneable {
     }
     public static bool operator ==(Coord cor1, Coord cor2) => (cor1.x == cor2.x && cor1.y == cor2.y);
     public static bool operator !=(Coord cor1, Coord cor2) => (cor1.x != cor2.x || cor1.y != cor2.y);
-
+    public static int Dist(Coord cor1, Coord cor2) {
+        int abs(int a) => a > 0 ? a : -a;
+        return abs(cor1.x - cor2.x) + abs(cor1.y - cor2.y);
+    }
     public object Clone() => MemberwiseClone();
 }

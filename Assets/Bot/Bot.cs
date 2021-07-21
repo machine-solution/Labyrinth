@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+// TODO: closure-checking in ConflictWall function
 /// <summary> Корень иерархии классов ботов </summary>
 public class Bot {
     //constants
@@ -493,20 +494,21 @@ public class Bot_Bob: Bot {
         Can(my_map.x, my_map.y, side) != res && 
         Can(my_map.x, my_map.y, side) != UNKNOWN;
     protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
+    // TODO: closure-checking
     protected bool ConflictWall() {
         bool[,] used = new bool[2 * Size, 2 * Size];
         int DFS(int a, int b) {
             used[a, b] = true;
-            if (Have(UNKNOWN, a, b)) return 0;
-            int sum = 1, L = LEFT, D = DOWN, R = RIGHT, U = UP;
-            if (Can(a, b, L) == FREE) if (!used[a - 1, b]) { int t = DFS(a - 1, b); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, D) == FREE) if (!used[a, b - 1]) { int t = DFS(a, b - 1); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, R) == FREE) if (!used[a + 1, b]) { int t = DFS(a + 1, b); if (t == 0) return 0; else sum += t; }
-            if (Can(a, b, U) == FREE) if (!used[a, b + 1]) { int t = DFS(a, b + 1); if (t == 0) return 0; else sum += t; }
+            int sum = 1, l = LEFT, d = DOWN, r = RIGHT, u = UP;
+            if (Can(a, b, l) == FREE) if (!used[a - 1, b]) sum += DFS(a - 1, b);
+            if (Can(a, b, d) == FREE) if (!used[a, b - 1]) sum += DFS(a, b - 1);
+            if (Can(a, b, r) == FREE) if (!used[a + 1, b]) sum += DFS(a + 1, b);
+            if (Can(a, b, u) == FREE) if (!used[a, b + 1]) sum += DFS(a, b + 1);
             return sum;
         }
         int res = DFS(my_map.x, my_map.y);
-        return (res > 0 && res != Size * Size);
+        return false;
+            //res != Size * Size;
     }
     protected void UpdateStats() {
         treasures = Check.treasures(my_id);
