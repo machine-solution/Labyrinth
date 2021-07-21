@@ -3,9 +3,10 @@ using System.Diagnostics;
 using System.Linq;
 
 class ItMain {
-    static int numberOfGames = 500;
+    static int numberOfGames = 100;
     static int steps = 0;
     public static Random rand = new Random();
+    public static bool tableOfResults = true;
     static int Main() {
         int errors = 0;
         Console.Write($" Хотите ввести число игр? (y/n) ");
@@ -17,50 +18,60 @@ class ItMain {
 
         First[] games = new First[numberOfGames];
         for (int i = 0; i < numberOfGames; ++i) {
-            //try {
-                games[i] = new First();
-                games[i].launch();
-                if (Bot.error != "") {
-                    Console.Write(Bot.error);
-                    ++errors;
-                    Bot.error = "";
-                }
-                steps += First.steps / First.players;
-            //}
-            //catch (Exception e) {
-               // Console.WriteLine($" Game error: {e.Message + "\n" + e.StackTrace}");
-            //}
+            games[i] = new First();
+            games[i].launch();
+            if (Bot.error != "") {
+                //Console.Write(Bot.error);
+                ++errors;
+                Bot.error = "";
+            }
+            steps += First.steps / First.players;
         }
         Console.WriteLine($" Среднее число ходов: {steps / numberOfGames}");
         Console.WriteLine($" Число ошибок: {errors} из {numberOfGames}");
+        if (tableOfResults) printTable();
         Console.ReadLine();
         return 0;
     }
+    static void printTable() {
+        Console.WriteLine($"\n\n\tПобед\tКладов\tПоломок\tПроведено игр");
+        for (int i = 0; i < First.players; ++i) {
+            Console.WriteLine($"  {First.name[i],4}\t{First.win[i]}\t{First.points[i]}\t{First.broken[i]}\t{numberOfGames}");
+        }
+    }
 }
 class First {
-    public static int id = -1, players = 2, human = 0, treasures = 100, size = 5, steps = 0;
+    public static int id = -1, players = 10, human = 0, treasures = 100, size = 5, steps = 0;
+    public static int[] win = new int[players], points = new int[players], broken = new int[players];
     public static string[] name;
-    public static Bot[] Alice;
+    public static Bot[] bot;
     public static Map lab;
     static readonly Random rand = ItMain.rand;
     public int launch() {
-        bool withWrLn = false, withPauses = true, Bot_show = false;
+        bool withWrLn = false, withPauses = true, botShow = false,
+            autoBot = false, autoName = false;
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
-        was = new bool[2 * size - 1, 2 * size - 1, players];
         name = new string[players];
-        Alice = new Bot[players];
-        lab = new Map();
+        bot = new Bot[4]{
+            new Bot_Rand(),
+            new Bot_Alice(),
+            new Bot_Bob(),
+            new Bot_Jam()
+        };
+        lab = new Map() { 
+            teleportsPairs = 0
+        };
         for (int i = 0; i < players; ++i) {
             lab.player[i].knifes = 1;
-            lab.player[i].bullets = i == 0 ? 100 : 0;
+            lab.player[i].bullets = 0;
             lab.player[i].armors = 0;
-            Alice[i] = new Bot_Jam();
-            Alice[i].Join(players, treasures, size, i);
+            if (autoBot) bot[i] = new Bot_Jam();
+            bot[i].Join(players, treasures, size, i);
             name[i] = getName();
-            // string[] s = new string[] { "Освальд", "Эдвард", "Барбара", "Рейчел", "Эшли" };
-            //if (players == s.Length) takeName(s);
+            string[] s = new string[] { "Rand", "Alice", "Bob", "Jam" };
+            if (!autoName) takeName(s, false);
         }
         //lab.Show();
         //Console.ReadKey(true);
@@ -78,8 +89,8 @@ class First {
                     s = Console.ReadLine(); bool end = false;
                     try {
                         int pos = s.IndexOf(' ');
-                        type = Alice[id].ansType = s.Substring(0, pos);
-                        side = Alice[id].ansSide = s.Substring(pos + 1, s.Length - pos - 1);
+                        type = bot[id].ansType = s.Substring(0, pos);
+                        side = bot[id].ansSide = s.Substring(pos + 1, s.Length - pos - 1);
                     }
                     catch { }
                     if (types.Contains(type) && sides.Contains(side)) end = true;
@@ -88,20 +99,18 @@ class First {
                 }
             }
             string gameAns;
-            gameAns = lab.GameAns(Alice[id].ansType, Alice[id].ansSide, id);
-            string ansType = Alice[id].ansType, ansSide = Alice[id].ansSide;
-            //was[Alice[id].my_map.x, Alice[id].my_map.y, id] = true;
+            gameAns = lab.GameAns(bot[id].ansType, bot[id].ansSide, id);
+            string ansType = bot[id].ansType, ansSide = bot[id].ansSide;
+            //was[bot[id].my_map.x, bot[id].my_map.y, id] = true;
             if (withWrLn) {
                 Console.WriteLine($" {name[id]}: {ansType} {ansSide}");
                 Console.WriteLine($" {gameAns}");
                 lab.Show();
             }
-            for (int i = human; i < players; ++i) {
-                Alice[i].Update(ansType, ansSide, gameAns, id);
-                if (Bot_show) updateBotShow(((Bot_Bob)Alice[i]).my_map, i);
-            }
+            for (int i = human; i < players; ++i) bot[i].Update(ansType, ansSide, gameAns, id);
             if (withWrLn) {
-                bot_show(((Bot_Bob)Alice[id]).my_map, id);
+                if (botShow)
+                    bot_show(((Bot_Bob)bot[id]).my_map, id);
                 bool[] isEvent = {
                     gameAns == "exit\n" && trs != lab.player[id].treasures,
                     ansType == "strike" && gameAns == "hit\n",
@@ -139,12 +148,12 @@ class First {
                         //Thread.Sleep(3200);
                     }
                 }
-                for (int i = 0; i < Event.Length; ++i) 
+                for (int i = 0; i < Event.Length; ++i)
                     printInfo(isEvent[i], Event[i]);
 
             }
             //withWrLn = true;
-            //if (gameAns == "hit\n" && Alice[id].smbLosed()) Thread.Sleep(SleepTimeAfterGame);
+            //if (gameAns == "hit\n" && bot[id].smbLosed()) Thread.Sleep(SleepTimeAfterGame);
             ++steps;
             if (steps / players > 1000) {
                 Console.WriteLine(">1000");
@@ -155,6 +164,17 @@ class First {
             //Console.MoveBufferArea(0, 0, 100, 1, 0, 40);
             //Console.Clear();
         }
+        if (ItMain.tableOfResults) {
+            int max = 0;
+            for (int i = 0; i < players; ++i)
+                if (lab.player[i].treasuresOut > max)
+                    max = lab.player[i].treasuresOut;
+            for (int i = 0; i < players; ++i) {
+                if (lab.player[i].treasuresOut == max) ++win[i];
+                points[i] += lab.player[i].treasuresOut;
+                broken[i] += bot[i].broken ? 1 : 0;
+            }
+        }
         if (withWrLn) Console.WriteLine();
         Console.WriteLine(" Game over with {0} steps. players = {1}, treasures = {2}, size = {3}", steps / players, players, treasures, size);
         if (withWrLn) for (int i = 0; i < players; ++i) { Console.WriteLine(" {0} treasures: {1}", name[i], lab.player[i].treasuresOut); }
@@ -163,20 +183,19 @@ class First {
         if (withWrLn) if (Console.ReadKey().Key == ConsoleKey.Escape) Process.GetCurrentProcess().Kill();
         return 0;
     }
-    public static void updateBotShow(Bot_Bob.Map map, int id) {
-        for (int i = 0; i < 2 * size - 1; ++i)
-            for (int j = 0; j < 2 * size - 1; ++j)
-                was[i, j, id] = false;
-        was[map.x, map.y, id] = true;
-    }
-    static void takeName(string[] s) {
-        bool[] a = new bool[s.Length];
-        for (int i = 0; i < s.Length; ++i) {
-            int x = rand.Next(s.Length);
-            while (a[x]) x = rand.Next(s.Length);
-            name[i] = s[x];
-            a[x] = true;
+    static void takeName(string[] s, bool random = true) {
+        if (random) {
+            bool[] a = new bool[s.Length];
+            for (int i = 0; i < s.Length; ++i) {
+                int x = rand.Next(s.Length);
+                while (a[x]) x = rand.Next(s.Length);
+                name[i] = s[x];
+                a[x] = true;
+            }
         }
+        else
+            for (int i = 0; i < s.Length; ++i)
+                name[i] = s[i];
     }
     static int sum() {
         int x = 0;
@@ -194,7 +213,7 @@ class First {
                 Console.WriteLine(
                     $"   treasures {name[players - a]}: {lab.player[players - a].treasures}," +
                     $" out: {lab.player[players - a].treasuresOut}," +
-                    $" my_map.exit: {((Bot_Bob)Alice[players - a]).my_map.exit[0] > -1}," +
+                    $" my_map.exit: {((Bot_Bob)bot[players - a]).my_map.exit[0] > -1}," +
                     $" steps: {steps / players}"
                     );
             }
@@ -255,7 +274,7 @@ class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
     readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
     readonly Random rand = ItMain.rand;
-    readonly int teleportsPairs = 0;
+    public int teleportsPairs = 0;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
         sum[0] = 0;
@@ -292,12 +311,13 @@ class Map {
                 return true;
         return false;
     }
-    void Teleportation(ref Coord coord) {
+    bool Teleportation(ref Coord coord) {
         for (int i = 0; i < 2 * teleportsPairs; ++i)
             if (coord == teleport[i]) {
                 coord = teleport[i % 2 == 0 ? i + 1 : i - 1];
-                break;
+                return true;
             }
+        return false;
     }
     void Move(ref Coord coord, int k, bool teleportFlag = true) {
         if (k == 0) coord.x--;
@@ -466,8 +486,7 @@ class Map {
             --player[id].bullets;
             bool hit = false;
             Coord bullet = p;
-            while (Can(bullet, k) == FREE && !hit) {
-                Move(ref bullet, k, false);
+            void attempt() {
                 for (int i = 0; i < players; ++i) {
                     if (player[i].coord == bullet) {
                         hit = true;
@@ -480,7 +499,12 @@ class Map {
                         }
                     }
                 }
-                Teleportation(ref bullet);
+            }
+            while (Can(bullet, k) == FREE && !hit) {
+                Move(ref bullet, k, false);
+                attempt();
+                if (Teleportation(ref bullet) && !hit)
+                    attempt();
             }
             if (hit) game += "hit\n";
             else game += "miss\n";
@@ -506,7 +530,8 @@ class Map {
                 while (Can(p, k) == FREE && !hit && t < 2) {
                     Move(ref cracker, k, false);
                     attempt();
-                    Teleportation(ref cracker);
+                    if (Teleportation(ref cracker) && !hit)
+                        attempt();
                     ++t;
                 }
             if (hit) game += "hit\n";

@@ -8,10 +8,10 @@ public class Bot {
     protected const int LEFT = 0, DOWN = 1, RIGHT = 2, UP = 3, NUMOFSIDES = 4;
 
     //variables
+    public string ansType, ansSide;
     public bool broken;
     public static string error = "";
     protected static System.Random rand = new System.Random();
-    public string ansType, ansSide;
 
     //functions
     public virtual void Join(int players, int treasures, int size, int id) { }
@@ -393,9 +393,7 @@ public class Bot_Bob: Bot {
         DFS(A.minx, A.miny);
         A.UpdateBorders();
     }
-    /// <summary>
-    /// Попытка совместить две карты с вероятностью хотя бы 1/k, обновляет первый аргумент
-    /// </summary>
+    /// <summary> Попытка совместить две карты с вероятностью хотя бы 1/k, обновляет первый аргумент </summary>
     protected void Merge(ref Map A, Map B, int k = 1) {
         A.UpdateBorders(); B.UpdateBorders();
         Map C = new Map(Size + 1);
@@ -491,10 +489,12 @@ public class Bot_Bob: Bot {
         }
         else GetInfoB();
     }
-    protected bool ConflictRes(int res, int side) => Can(my_map.x, my_map.y, side) != res && Can(my_map.x, my_map.y, side) != UNKNOWN;
+    protected bool ConflictRes(int res, int side) => 
+        Can(my_map.x, my_map.y, side) != res && 
+        Can(my_map.x, my_map.y, side) != UNKNOWN;
     protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
     protected bool ConflictWall() {
-        used = new bool[2 * Size, 2 * Size]; //init
+        bool[,] used = new bool[2 * Size, 2 * Size];
         int DFS(int a, int b) {
             used[a, b] = true;
             if (Have(UNKNOWN, a, b)) return 0;
@@ -740,14 +740,21 @@ public class Bot_Bob: Bot {
             players[id].UpdateStats();
             UpdateStats();
             TryKill();
-            if (!types.Contains(ansType) || !sides.Contains(ansSide)) RandomAns();
         }
         catch (System.Exception e) {
             broken = true;
             error = e.Message + "\n" + e.StackTrace + "\n";
             Reload();
         }
+        finally {
+            checkAns();
+        }
     }
+
+    protected void checkAns() {
+        if (!types.Contains(ansType) || !sides.Contains(ansSide)) RandomAns();
+    }
+
     //Jam
     protected virtual bool IsJam() => false;
     protected virtual void Spy_on(int id) { }
@@ -1004,12 +1011,14 @@ public class Bot_Alice: Bot_Bob {
             }
             players[id].treasures = Check.treasures(id);
             UpdateStats();
-            if (!types.Contains(ansType) || !sides.Contains(ansSide)) RandomAns();
         }
         catch (System.Exception e) {
             broken = true;
             error = e.Message + "\n" + e.StackTrace + "\n";
             Reload();
+        }
+        finally {
+            checkAns();
         }
     }
     protected new bool SmbLosed() {
@@ -1019,9 +1028,9 @@ public class Bot_Alice: Bot_Bob {
         return false;
     }
 }
-/// <summary> Бот: version 1.6 </summary>
+/// <summary> Бот: version 1.7 </summary>
 public class Bot_Jam: Bot_Bob {
-    /// <summary> Бот: version 1.6 </summary>
+    /// <summary> Бот: version 1.7 </summary>
     public Bot_Jam() { }
     protected void BFS(int[,] indspy) {
         //init
@@ -1149,6 +1158,13 @@ public class Bot_Jam: Bot_Bob {
             if (!hit && ansType != "step" && choice == NO_CHOICE) UpdateAns();
         }
     }
+}
+/// <summary> Бот: version 0.1 </summary>
+public class Bot_Rand: Bot_Bob {
+    /// <summary> Бот: version 0.1 </summary>
+    public Bot_Rand() { }
+    public override void Update(string ansType_id, string ansSide_id, string gameAns_id, int id) 
+        => RandomAns();
 }
 /// <summary> Бот: version 2.0 (in developing) </summary>
 public class Bot_v2: Bot {
