@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-// TODO: closure-checking in ConflictWall function
 /// <summary> Корень иерархии классов ботов </summary>
 public class Bot {
     //constants
@@ -232,10 +231,12 @@ public class Bot_Bob: Bot {
             for (int i = 0; i < 4; ++i) {
                 int dx = 0, dy = 0;
 
-                if (i == LEFT) dx = -1;
-                else if (i == DOWN) dy = -1;
-                else if (i == RIGHT) dx = 1;
-                else if (i == UP) dy = 1;
+                switch (i) {
+                    case LEFT: --dx; break;
+                    case DOWN: --dy; break;
+                    case RIGHT: ++dx; break;
+                    case UP: ++dy; break;
+                }
 
                 bool Can = this.Can(z, t, i) == FREE;
                 int[] to = { z + dx, t + dy };
@@ -406,7 +407,7 @@ public class Bot_Bob: Bot {
         Map C = new Map(Size + 1);
         int var = 0;
         List<int> gxa = new List<int>(), gya = new List<int>(), gxb = new List<int>(), gyb = new List<int>();
-        int dxa = (A.maxx - A.minx), dya = (A.maxy - A.miny), dxb = (B.maxx - B.minx), dyb = (B.maxy - B.miny);
+        int dxa = A.maxx - A.minx, dya = A.maxy - A.miny, dxb = B.maxx - B.minx, dyb = B.maxy - B.miny;
         for (int ia = 0; ia < Size - dxa; ++ia)
             for (int ja = 0; ja < Size - dya; ++ja)
                 for (int ib = 0; ib < Size - dxb; ++ib)
@@ -499,101 +500,24 @@ public class Bot_Bob: Bot {
     protected bool ConflictRes(int res, int side) =>
         Can(my_map.x, my_map.y, side) != res &&
         Can(my_map.x, my_map.y, side) != UNKNOWN;
-    protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
-    // TODO: closure-checking
-    protected bool ConflictWall() {
-        bool[,] used = new bool[2 * Size, 2 * Size];
-        int[,,] wall = new int[2 * Size, 2 * Size, 2];
-        int Can(Coord cor, int k) {
-            bool A = cor.x < 0, B = cor.x >= 2 * Size - 1, C = cor.y < 0, D = cor.y >= 2 * Size - 1;
-            if ((A || B) && (C || D)) return UNKNOWN;
-            if (A) if (k != RIGHT) return UNKNOWN;
-            if (B) if (k != LEFT) return UNKNOWN;
-            if (C) if (k != UP) return UNKNOWN;
-            if (D) if (k != DOWN) return UNKNOWN;
-            return this.Can(cor, k);
-        }
-        void Move(ref Coord coord, int k) {
-            switch (k) {
-                case LEFT: --coord.x; break;
-                case DOWN: --coord.y; break;
-                case RIGHT: ++coord.x; break;
-                case UP: ++coord.y; break;
-            }
-        }
-        void UpdateWall(Coord cor, int k) {
-            bool A = cor.x < 0, B = cor.x >= 2 * Size - 1, C = cor.y < 0, D = cor.y >= 2 * Size - 1;
-            if ((A || B) && (C || D)) return;
-            if (A) if (k != RIGHT) return;
-            if (B) if (k != LEFT) return;
-            if (C) if (k != UP) return;
-            if (D) if (k != DOWN) return;
-            ++wall[cor.x + (k == RIGHT ? 1 : 0), cor.y + (k == UP ? 1 : 0), k % 2];
-        }
-        void Walking(Coord start, int k) {
-            if (wall[start.x + (k == RIGHT ? 1 : 0), start.y + (k == UP ? 1 : 0), k % 2] == 0) {
-                Coord coord = start; int dir = k;
-                do {
-                    if (Can(coord, dir) < 0 && Can(coord, (dir + 1) % 4) >= 0) {
-                        UpdateWall(coord, dir);
-                        Move(ref coord, (dir + 1) % 4);
-                    }
-                    else if (Can(coord, dir) >= 0) {
-                        Move(ref coord, dir);
-                        dir = (4 + dir - 1) % 4;
-                    }
-                    else {
-                        UpdateWall(coord, dir);
-                        dir = (dir + 1) % 4;
-                        UpdateWall(coord, dir);
-                    }
-                }
-                while (coord != start || dir != k);
-            }
-        }
 
-        void DFS(int a, int b) {
-            used[a, b] = true;
-            const int l = LEFT, d = DOWN, r = RIGHT, u = UP;
-
-            if (this.Can(a, b, l) == FREE) if (!used[a - 1, b]) DFS(a - 1, b);
-            if (this.Can(a, b, d) == FREE) if (!used[a, b - 1]) DFS(a, b - 1);
-            if (this.Can(a, b, r) == FREE) if (!used[a + 1, b]) DFS(a + 1, b);
-            if (this.Can(a, b, u) == FREE) if (!used[a, b + 1]) DFS(a, b + 1);
-
-            for (int i = 0; i < NUMOFSIDES; ++i)
-                if (this.Can(a, b, i) == WALL)
-                    Walking(new Coord(a, b), i);
-
-        }
-
-        bool HaveClose() {
-            for (int i = 0; i < 2 * Size; ++i)
-                for (int j = 0; j < 2 * Size; ++j)
-                    if (wall[i, j, 0] == 1 || wall[i, j, 1] == 1)
-                        if (my_map.exit[0] < 0 ||
-                            i != my_map.minx &&
-                            j != my_map.miny &&
-                            i != my_map.maxx + 1 &&
-                            j != my_map.maxy + 1) {
-
-                            //First.lab.Show();
-                            //First.bot_show(my_map, my_id);
-                            return true;
-
-                        }
-            return false;
-        }
-
-        try {
-            DFS(my_map.x, my_map.y);
-            return HaveClose();
-        }
-        catch {
-            //First.lab.Show();
-            //First.bot_show(my_map, my_id);
+    protected bool Conflict() {
+        if (my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size)
             return true;
+
+        bool[,] used = new bool[2 * Size, 2 * Size];
+        int s = 2 * Size - 2;
+        int DFS(int a, int b) {
+            used[a, b] = true;
+            int sum = 1, l = LEFT, d = DOWN, r = RIGHT, u = UP;
+            if (Can(a, b, l) != WALL) if (a - 1 >= 0 && !used[a - 1, b]) sum += DFS(a - 1, b);
+            if (Can(a, b, d) != WALL) if (b - 1 >= 0 && !used[a, b - 1]) sum += DFS(a, b - 1);
+            if (Can(a, b, r) != WALL) if (a + 1 <= s && !used[a + 1, b]) sum += DFS(a + 1, b);
+            if (Can(a, b, u) != WALL) if (b + 1 <= s && !used[a, b + 1]) sum += DFS(a, b + 1);
+            return sum;
         }
+        int res = DFS(my_map.x, my_map.y);
+        return res != (2 * Size - 1) * (2 * Size - 1) && res != Size * Size;
     }
     protected void UpdateStats() {
         treasures = Check.treasures(my_id);
@@ -609,7 +533,7 @@ public class Bot_Bob: Bot {
         aftHosp = false;
         my_map = players[my_id].B.copy();
         choice = NO_CHOICE;
-        if (ConflictMove() || ConflictWall())
+        if (Conflict())
             Reload();
     }
     protected bool SmbLosed() {
@@ -647,8 +571,7 @@ public class Bot_Bob: Bot {
                 players[my_id].B.UpdateCan(res, k);
                 players[my_id].B.UpdateExit(k);
             }
-            if (ConflictMove()) GetInfoB();
-            if (ConflictWall()) GetInfoB();
+            if (Conflict()) GetInfoB();
             if (choice == TAKE_AFTER_STRIKE) choice = NO_CHOICE;
             if (choice == TAKE_AFTER_FIRE && (Check.treasures(my_id) > treasures || gameAns != GO)) choice = NO_CHOICE;
             if (aftHosp) Add(hosp_map, players[my_id].B, players[my_id].B.x - hosp_map.x, players[my_id].B.y - hosp_map.y);
@@ -705,8 +628,7 @@ public class Bot_Bob: Bot {
                                 players[my_id].B.UpdateCan(1, (k + 2) % 4);
                             }
                             Add(my_map, players[my_id].B, 0, 0);
-                            if (ConflictMove()) GetInfoB();
-                            if (ConflictWall()) GetInfoB();
+                            if (Conflict()) GetInfoB();
                         }
                     }
                     else {
@@ -732,8 +654,7 @@ public class Bot_Bob: Bot {
                                     Add(players[i].B, players[id].B, -dx, -dy);
                                     if (id == my_id) {
                                         Add(my_map, players[my_id].B, 0, 0);
-                                        if (ConflictMove()) GetInfoB();
-                                        if (ConflictWall()) GetInfoB();
+                                        if (Conflict()) GetInfoB();
                                     }
                                 }
 

@@ -77,6 +77,7 @@ class First {
         //Console.ReadKey(true);
         while (sum() != treasures) {
             //if (Console.ReadKey(false).Key == ConsoleKey.Escape) break;
+            
             id = (id + 1) % players;
             int kn = Check.knifes(id), bl = Check.bullets(id),
                 ar = Check.armors(id), cr = Check.crackers(id);
