@@ -71,7 +71,7 @@ public class Bot_Bob: Bot {
     public class Map {
         public int size;
         public int rank;
-        public int x, y;
+        public int x = 0, y = 0;
         public int minx, miny, maxx, maxy;
         public int[,,] can_to_move;
         public int[] exit;
@@ -146,21 +146,26 @@ public class Bot_Bob: Bot {
                 bool B = (side == DOWN && (b < 0 || b >= 2 * Size || b + Size < 0 || b + Size >= 2 * Size));
                 bool C = (side == RIGHT && (a + 1 < 0 || a + 1 >= 2 * Size || a + 1 - Size < 0 || a + 1 - Size >= 2 * Size));
                 bool D = (side == UP && (b + 1 < 0 || b + 1 >= 2 * Size || b + 1 - Size < 0 || b + 1 - Size >= 2 * Size));
-                if (A || B || C || D) exit[0] = -2;
+                if (A || B || C || D)
+                    exit[0] = -2;
                 else {
                     if (side == LEFT && maxy - miny == Size - 1) {
+                        minx = a; maxx = a + Size - 1;
                         for (int i = a; i < a + Size; ++i) { AddWall(i, miny, 1); AddWall(i, miny + Size, 1); }
                         for (int j = miny; j <= maxy; ++j) { AddWall(a, j, 0); AddWall(a + Size, j, 0); }
                     }
                     else if (side == DOWN && maxx - minx == Size - 1) {
+                        miny = b; maxy = b + Size - 1;
                         for (int i = minx; i <= maxx; ++i) { AddWall(i, b, 1); AddWall(i, b + Size, 1); }
                         for (int j = b; j < b + Size; ++j) { AddWall(minx, j, 0); AddWall(minx + Size, j, 0); }
                     }
                     else if (side == RIGHT && maxy - miny == Size - 1) {
+                        minx = a + 1 - Size; maxx = a;
                         for (int i = a + 1 - Size; i < a + 1; ++i) { AddWall(i, miny, 1); AddWall(i, miny + Size, 1); }
                         for (int j = miny; j <= maxy; ++j) { AddWall(a + 1 - Size, j, 0); AddWall(a + 1, j, 0); }
                     }
                     else if (side == UP && maxx - minx == Size - 1) {
+                        miny = b + 1 - Size; maxy = b;
                         for (int i = minx; i <= maxx; ++i) { AddWall(i, b + 1 - Size, 1); AddWall(i, b + 1, 1); }
                         for (int j = b + 1 - Size; j < b + 1; ++j) { AddWall(minx, j, 0); AddWall(minx + Size, j, 0); }
                     }
@@ -204,6 +209,7 @@ public class Bot_Bob: Bot {
         return -1;
     }
     protected virtual int Can(int a, int b, int k) => my_map.Can(a, b, k);
+    protected int Can(Coord coord, int k) => my_map.Can(coord.x, coord.y, k);
     protected bool Have(int form, int a, int b) {
         for (int i = 0; i < NUMOFSIDES; ++i)
             if (Can(a, b, i) == form)
@@ -391,7 +397,7 @@ public class Bot_Bob: Bot {
             if (A.Can(m, n, r) == FREE) if (!used[m + 1, n]) DFS(m + 1, n);
             if (A.Can(m, n, u) == FREE) if (!used[m, n + 1]) DFS(m, n + 1);
         }
-        DFS(A.minx, A.miny);
+        DFS(A.x, A.y);
         A.UpdateBorders();
     }
     /// <summary> Попытка совместить две карты с вероятностью хотя бы 1/k, обновляет первый аргумент </summary>
@@ -483,32 +489,111 @@ public class Bot_Bob: Bot {
                 if (map.Can(a, b, 2) == 1) if (!used[a + 1, b]) DFS(ref map, a + 1, b);
                 if (map.Can(a, b, 3) == 1) if (!used[a, b + 1]) DFS(ref map, a, b + 1);
             }
-            DFS(ref A, A.minx, A.miny);
+            DFS(ref A, A.x, A.y);
             A.UpdateBorders();
             if (A.exit[0] == -2) { GetInfoB(); return; }
             Spy_detect(x, y);
         }
         else GetInfoB();
     }
-    protected bool ConflictRes(int res, int side) => 
-        Can(my_map.x, my_map.y, side) != res && 
+    protected bool ConflictRes(int res, int side) =>
+        Can(my_map.x, my_map.y, side) != res &&
         Can(my_map.x, my_map.y, side) != UNKNOWN;
     protected bool ConflictMove() => my_map.maxx - my_map.minx >= Size || my_map.maxy - my_map.miny >= Size;
     // TODO: closure-checking
     protected bool ConflictWall() {
         bool[,] used = new bool[2 * Size, 2 * Size];
-        int DFS(int a, int b) {
-            used[a, b] = true;
-            int sum = 1, l = LEFT, d = DOWN, r = RIGHT, u = UP;
-            if (Can(a, b, l) == FREE) if (!used[a - 1, b]) sum += DFS(a - 1, b);
-            if (Can(a, b, d) == FREE) if (!used[a, b - 1]) sum += DFS(a, b - 1);
-            if (Can(a, b, r) == FREE) if (!used[a + 1, b]) sum += DFS(a + 1, b);
-            if (Can(a, b, u) == FREE) if (!used[a, b + 1]) sum += DFS(a, b + 1);
-            return sum;
+        int[,,] wall = new int[2 * Size, 2 * Size, 2];
+        int Can(Coord cor, int k) {
+            bool A = cor.x < 0, B = cor.x >= 2 * Size - 1, C = cor.y < 0, D = cor.y >= 2 * Size - 1;
+            if ((A || B) && (C || D)) return UNKNOWN;
+            if (A) if (k != RIGHT) return UNKNOWN;
+            if (B) if (k != LEFT) return UNKNOWN;
+            if (C) if (k != UP) return UNKNOWN;
+            if (D) if (k != DOWN) return UNKNOWN;
+            return this.Can(cor, k);
         }
-        int res = DFS(my_map.x, my_map.y);
-        return false;
-            //res != Size * Size;
+        void Move(ref Coord coord, int k) {
+            switch (k) {
+                case LEFT: --coord.x; break;
+                case DOWN: --coord.y; break;
+                case RIGHT: ++coord.x; break;
+                case UP: ++coord.y; break;
+            }
+        }
+        void UpdateWall(Coord cor, int k) {
+            bool A = cor.x < 0, B = cor.x >= 2 * Size - 1, C = cor.y < 0, D = cor.y >= 2 * Size - 1;
+            if ((A || B) && (C || D)) return;
+            if (A) if (k != RIGHT) return;
+            if (B) if (k != LEFT) return;
+            if (C) if (k != UP) return;
+            if (D) if (k != DOWN) return;
+            ++wall[cor.x + (k == RIGHT ? 1 : 0), cor.y + (k == UP ? 1 : 0), k % 2];
+        }
+        void Walking(Coord start, int k) {
+            if (wall[start.x + (k == RIGHT ? 1 : 0), start.y + (k == UP ? 1 : 0), k % 2] == 0) {
+                Coord coord = start; int dir = k;
+                do {
+                    if (Can(coord, dir) < 0 && Can(coord, (dir + 1) % 4) >= 0) {
+                        UpdateWall(coord, dir);
+                        Move(ref coord, (dir + 1) % 4);
+                    }
+                    else if (Can(coord, dir) >= 0) {
+                        Move(ref coord, dir);
+                        dir = (4 + dir - 1) % 4;
+                    }
+                    else {
+                        UpdateWall(coord, dir);
+                        dir = (dir + 1) % 4;
+                        UpdateWall(coord, dir);
+                    }
+                }
+                while (coord != start || dir != k);
+            }
+        }
+
+        void DFS(int a, int b) {
+            used[a, b] = true;
+            const int l = LEFT, d = DOWN, r = RIGHT, u = UP;
+
+            if (this.Can(a, b, l) == FREE) if (!used[a - 1, b]) DFS(a - 1, b);
+            if (this.Can(a, b, d) == FREE) if (!used[a, b - 1]) DFS(a, b - 1);
+            if (this.Can(a, b, r) == FREE) if (!used[a + 1, b]) DFS(a + 1, b);
+            if (this.Can(a, b, u) == FREE) if (!used[a, b + 1]) DFS(a, b + 1);
+
+            for (int i = 0; i < NUMOFSIDES; ++i)
+                if (this.Can(a, b, i) == WALL)
+                    Walking(new Coord(a, b), i);
+
+        }
+
+        bool HaveClose() {
+            for (int i = 0; i < 2 * Size; ++i)
+                for (int j = 0; j < 2 * Size; ++j)
+                    if (wall[i, j, 0] == 1 || wall[i, j, 1] == 1)
+                        if (my_map.exit[0] < 0 ||
+                            i != my_map.minx &&
+                            j != my_map.miny &&
+                            i != my_map.maxx + 1 &&
+                            j != my_map.maxy + 1) {
+
+                            //First.lab.Show();
+                            //First.bot_show(my_map, my_id);
+                            return true;
+
+                        }
+            return false;
+        }
+
+        try {
+            DFS(my_map.x, my_map.y);
+            return HaveClose();
+        }
+        catch {
+            //First.lab.Show();
+            //First.bot_show(my_map, my_id);
+            return true;
+        }
     }
     protected void UpdateStats() {
         treasures = Check.treasures(my_id);
@@ -597,7 +682,7 @@ public class Bot_Bob: Bot {
                                     if (hosp_map.Can(a, b, 2) == 1) if (!used[a + 1, b]) DFS(a + 1, b);
                                     if (hosp_map.Can(a, b, 3) == 1) if (!used[a, b + 1]) DFS(a, b + 1);
                                 }
-                                DFS(hosp_map.minx, hosp_map.miny);
+                                DFS(Size - 1, Size - 1);
                                 Merge(ref hosp_map, players[my_id].B);
                                 hosp_map.UpdateCoord(Size - 1, Size - 1);
                                 players[my_id].B = hosp_map.copy();
@@ -787,7 +872,7 @@ public class Bot_Alice: Bot_Bob {
     new Player[] players;
     int x, y;
     int[,,] can_to_move = new int[20, 20, 2];
-    int[] exit = { -1, -1, -1 };
+    public int[] exit = { -1, -1, -1 };
     bool doubt;
     bool[,] was;
 
@@ -1165,7 +1250,7 @@ public class Bot_Jam: Bot_Bob {
 public class Bot_Rand: Bot_Bob {
     /// <summary> Бот: version 0.1 </summary>
     public Bot_Rand() { }
-    public override void Update(string ansType_id, string ansSide_id, string gameAns_id, int id) 
+    public override void Update(string ansType_id, string ansSide_id, string gameAns_id, int id)
         => RandomAns();
 }
 /// <summary> Бот: version 2.0 (in developing) </summary>

@@ -42,6 +42,7 @@ class ItMain {
 }
 class First {
     public static int id = -1, players = 10, human = 0, treasures = 100, size = 5, steps = 0;
+    public static int teleportPairs;
     public static int[] win = new int[players], points = new int[players], broken = new int[players];
     public static string[] name;
     public static Bot[] bot;
@@ -53,6 +54,7 @@ class First {
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
+        teleportPairs = 0;
         name = new string[players];
         bot = new Bot[4]{
             new Bot_Rand(),
@@ -60,9 +62,7 @@ class First {
             new Bot_Bob(),
             new Bot_Jam()
         };
-        lab = new Map() {
-            teleportsPairs = 0
-        };
+        lab = new Map();
         for (int i = 0; i < players; ++i) {
             lab.player[i].knifes = 1;
             lab.player[i].bullets = 0;
@@ -101,7 +101,6 @@ class First {
             string gameAns;
             gameAns = lab.GameAns(bot[id].ansType, bot[id].ansSide, id);
             string ansType = bot[id].ansType, ansSide = bot[id].ansSide;
-            //was[bot[id].my_map.x, bot[id].my_map.y, id] = true;
             if (withWrLn) {
                 Console.WriteLine($" {name[id]}: {ansType} {ansSide}");
                 Console.WriteLine($" {gameAns}");
@@ -208,17 +207,20 @@ class First {
     }
     static string getName(int i) => (i + 1).ToString();
     public static void bot_show(Bot_Bob.Map map, int id) {
-        void print(int a) {
-            try {
-                Console.WriteLine(
-                    $"   treasures {name[players - a]}: {lab.player[players - a].treasures}," +
-                    $" out: {lab.player[players - a].treasuresOut}," +
-                    $" my_map.exit: {((Bot_Bob)bot[players - a]).my_map.exit[0] > -1}," +
-                    $" steps: {steps / players}"
-                    );
-            }
-            catch { Console.WriteLine(" Sorry, there was an error "); }
-        }
+        //void print(int a) {
+        //    try {
+        //        bool exit = false;
+        //        if (bot[players - a] is Bot_Alice alice) exit = alice.exit[0] > -1;
+        //        else exit = ((Bot_Bob)bot[players - a]).my_map.exit[0] > -1;
+        //        Console.WriteLine(
+        //            $"   treasures {name[players - a]}: {lab.player[players - a].treasures}," +
+        //            $" out: {lab.player[players - a].treasuresOut}," +
+        //            $" my_map.exit: {exit}," +
+        //            $" steps: {steps / players}"
+        //            );
+        //    }
+        //    catch { Console.WriteLine(" Sorry, there was an error "); }
+        //}
         Bot_Bob.Map this_map = map;
         int Size = 2 * size - 1;
         for (int j = 2 * (Size + 1) - 1; j > 0; --j)
@@ -261,9 +263,9 @@ class First {
                         else Console.Write(" o ");
                     }
                 if (i == 2 * Size + 1)
-                    if (j <= players)
-                        print(j);
-                    else
+                    //if (j <= players)
+                    //    print(j);
+                    //else
                         Console.WriteLine();
             }
         Console.WriteLine();
@@ -274,7 +276,6 @@ class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
     readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
     readonly Random rand = ItMain.rand;
-    public int teleportsPairs = 0;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
         sum[0] = 0;
@@ -283,7 +284,8 @@ class Map {
         for (int i = 0; i < mass.Length; ++i) if (sum[i] <= x && x < sum[i + 1]) return i;
         return -1;
     }
-    private readonly int players = First.players, treasures = First.treasures, size = First.size;
+    readonly int players = First.players, treasures = First.treasures, size = First.size;
+    readonly int teleportsPairs = First.teleportPairs;
     Coord ars, hos;
     Coord[] teleport;
     int arsRecharge = 0, arsNum = -1;
@@ -598,7 +600,7 @@ class Map {
                     }
                     if (!x) {
                         Coord coord = new Coord(i / 2, j / 2);
-                        if (HaveTeleport(coord)) print(" T ", ConsoleColor.DarkRed);
+                        if (HaveTeleport(coord)) print(" T ", ConsoleColor.Green);
                         else if (treasure[i / 2, j / 2] > 0) print(" t ", ConsoleColor.DarkBlue);
                         else if (ars == new Coord(i / 2, j / 2)) print(" a ", ConsoleColor.Green);
                         else if (hos == new Coord(i / 2, j / 2)) print(" h ", ConsoleColor.Green);
