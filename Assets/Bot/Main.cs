@@ -19,11 +19,11 @@ class ItMain {
         First[] games = new First[numberOfGames];
         for (int i = 0; i < numberOfGames; ++i) {
             games[i] = new First();
-            games[i].launch();
-            if (Bot.error != "") {
+            games[i].launch(i);
+            if (First.error != "") {
                 //Console.Write(Bot.error);
                 ++errors;
-                Bot.error = "";
+                First.error = "";
             }
             steps += First.steps / First.players;
         }
@@ -34,9 +34,9 @@ class ItMain {
         return 0;
     }
     static void printTable() {
-        Console.WriteLine($"\n\n\tПобед\tКладов\tПоломок\tПроведено игр");
+        Console.WriteLine($"\n\n{"",10}\tПобед\tКладов\tПоломок\tПроведено игр");
         for (int i = 0; i < First.players; ++i) {
-            Console.WriteLine($"  {First.name[i],4}\t{First.win[i]}\t{First.points[i]}\t{First.broken[i]}\t{numberOfGames}");
+            Console.WriteLine($"{First.name[i],10}\t{First.win[i]}\t{First.points[i]}\t{First.broken[i]}\t{numberOfGames}");
         }
     }
 }
@@ -47,10 +47,13 @@ class First {
     public static string[] name;
     public static Bot[] bot;
     public static Map lab;
+    public static string error="";
     static readonly Random rand = ItMain.rand;
-    public int launch() {
-        bool withWrLn = false, withPauses = true, botShow = false,
-            autoBot = false, autoName = false;
+    public int launch(int numberOfGame) {
+        bool withWrLn = false, withPauses = false, botShow = false,
+            autoBot = false, autoName = false, clear = false,
+            time = false;
+        int stopGame = 2000;
         human = 0;
         players = 4; treasures = 100; size = 5;
         id = -1; steps = 0;
@@ -62,11 +65,12 @@ class First {
             new Bot_Bob(),
             new Bot_Jam()
         };
-        lab = new Map();
+        lab = new Map() {
+            arsSettings = new int[] { 20, 10, 6, 1 }
+        };
         for (int i = 0; i < players; ++i) {
             lab.player[i].knifes = 1;
-            lab.player[i].bullets = 0;
-            lab.player[i].armors = 0;
+            if (i == 3) lab.player[i].crackers = 100;
             if (autoBot) bot[i] = new Bot_Jam();
             bot[i].Join(players, treasures, size, i);
             name[i] = getName();
@@ -77,7 +81,7 @@ class First {
         //Console.ReadKey(true);
         while (sum() != treasures) {
             //if (Console.ReadKey(false).Key == ConsoleKey.Escape) break;
-            
+
             id = (id + 1) % players;
             int kn = Check.knifes(id), bl = Check.bullets(id),
                 ar = Check.armors(id), cr = Check.crackers(id);
@@ -102,6 +106,7 @@ class First {
             string gameAns;
             gameAns = lab.GameAns(bot[id].ansType, bot[id].ansSide, id);
             string ansType = bot[id].ansType, ansSide = bot[id].ansSide;
+            if (bot[id].broken) error = bot[id].error;
             if (withWrLn) {
                 Console.WriteLine($" {name[id]}: {ansType} {ansSide}");
                 Console.WriteLine($" {gameAns}");
@@ -115,6 +120,7 @@ class First {
                     gameAns == "exit\n" && trs != lab.player[id].treasures,
                     ansType == "strike" && gameAns == "hit\n",
                     ansType == "fire" && gameAns == "hit\n",
+                    ansType == "throw" && gameAns == "hit\n",
                     ansType == "step" && (kn != Check.knifes(id) || bl != Check.bullets(id) ||
                     ar!=Check.armors(id) || cr!=Check.crackers(id)),
                     ansType == "step" && lab.HaveTeleport(lab.player[id].coord)
@@ -123,40 +129,43 @@ class First {
                     $" {trs} treasures thrown out by {name[id]}!",
                     $" {name[id]} takes murder with knife!",
                     $" {name[id]} takes murder with fire!",
+                    $" {name[id]} shoked other with cracker!",
                     $" {name[id]} gets weapon from arsenal!",
                     $" {name[id]} is teleported!"
                 };
                 void printInfo(bool A, string s) {
                     if (A) {
                         Console.WriteLine(s);
-                        if (s == Event[1] || s == Event[2]) {
+                        if (s == Event[1] || s == Event[2] || s == Event[3]) {
+                            string ev = s;
                             s = " ";
-                            int deathes = 0;
+                            int attacked = 0;
                             for (int i = 0; i < players; ++i)
-                                if (lab.killed[i]) { s += $"{name[i]}, "; ++deathes; }
-                            if (deathes == 0) s += "No one";
+                                if (lab.attacked[i]) { s += $"{name[i]}, "; ++attacked; }
+                            if (attacked == 0) s += "No one";
                             else s = s.Substring(0, s.Length - 2);
-                            if (deathes <= 1) s += " is killed";
-                            else s += " are killed";
-                            Console.WriteLine(s);
+                            if (attacked <= 1) s += " is ";
+                            else s += " are ";
+                            if (ev == Event[3]) s += "shoked";
+                            else s += "killed";
+                            Console.WriteLine(s + "\n");
                         }
                         if (withPauses) {
                             Console.WriteLine(" Press any key to continue... \n");
                             Console.ReadKey();
                         }
-                        //else
-                        //Thread.Sleep(3200);
                     }
                 }
                 for (int i = 0; i < Event.Length; ++i)
                     printInfo(isEvent[i], Event[i]);
-
+                if (time) System.Threading.Thread.Sleep(500);
+                if (clear) Console.Clear();
             }
             //withWrLn = true;
             //if (gameAns == "hit\n" && bot[id].smbLosed()) Thread.Sleep(SleepTimeAfterGame);
             ++steps;
-            if (steps / players > 1000) {
-                Console.WriteLine(">1000");
+            if (steps / players >= stopGame) {
+                Console.WriteLine($"  Stop game! (current limit of steps: {stopGame})");
                 break;
             }
             //Thread.Sleep(1000);
@@ -176,8 +185,9 @@ class First {
             }
         }
         if (withWrLn) Console.WriteLine();
-        Console.WriteLine(" Game over with {0} steps. players = {1}, treasures = {2}, size = {3}", steps / players, players, treasures, size);
-        if (withWrLn) for (int i = 0; i < players; ++i) { Console.WriteLine(" {0} treasures: {1}", name[i], lab.player[i].treasuresOut); }
+        string s1 = $"{numberOfGame}.", s2 = $"Game over with {steps / players,4} steps.", s3 = $"players = {players,2},", s4 = $"treasures = {treasures,3},", s5 = $"size = {size,2}";
+        Console.WriteLine($"{s1,6} {s2,-29} {s3,-15} {s4,-18} {s5,-10}");
+        if (withWrLn) for (int i = 0; i < players; ++i) { Console.WriteLine($"{name[i],10}   treasures: {lab.player[i].treasuresOut}"); }
         if (withWrLn) Console.WriteLine();
         if (withWrLn) Console.WriteLine(" If you want to end this process press \"Escape\",\n If you want to continue press any other key");
         if (withWrLn) if (Console.ReadKey().Key == ConsoleKey.Escape) Process.GetCurrentProcess().Kill();
@@ -267,7 +277,7 @@ class First {
                     //if (j <= players)
                     //    print(j);
                     //else
-                        Console.WriteLine();
+                    Console.WriteLine();
             }
         Console.WriteLine();
     }
@@ -275,7 +285,7 @@ class First {
 }
 class Map {
     const int EXIT = -2, WALL = -1, FREE = 0, WALL_PRECISION = 7;
-    readonly int[] arsSettings = new int[] { 20, 10, 6, 0 };
+    public int[] arsSettings;
     readonly Random rand = ItMain.rand;
     int massRand(int[] mass) {
         int[] sum = new int[mass.Length + 1];
@@ -292,11 +302,13 @@ class Map {
     int arsRecharge = 0, arsNum = -1;
     readonly int[,,] can = new int[First.size + 1, First.size + 1, 5];
     readonly int[,] treasure = new int[First.size, First.size];
-    public bool[] killed = new bool[First.players];
+    public bool[] attacked = new bool[First.players];
     public struct game_player {
         public Coord coord;
         public int treasures, treasuresOut, knifes, bullets, armors, crackers;
-        public bool crazy;
+        public bool shoked;
+        public int x() => coord.x;
+        public int y() => coord.y;
     }
     public game_player[] player = new game_player[First.players];
     int Can(int x, int y, int k) {
@@ -363,7 +375,7 @@ class Map {
         } while (!IsConnected());
         ars = new Coord(rand.Next(size), rand.Next(size));
         hos = new Coord(rand.Next(size), rand.Next(size));
-        int xe=0, ye=0, ke = rand.Next(4);
+        int xe = 0, ye = 0, ke = rand.Next(4);
         switch (ke) {
             case 0: xe = 0; ye = rand.Next(size); break;
             case 1: xe = rand.Next(size); ye = 0; break;
@@ -387,7 +399,7 @@ class Map {
                     for (int k = 0; k < 4; ++k)
                         ChangeCan(x, y, k, FREE);
         }
-        
+
         bool IsConnected() {
             bool[,] used = new bool[size, size];
             int DFS(int x, int y) {
@@ -405,7 +417,7 @@ class Map {
 
     public string GameAns(string AnsType, string AnsSide, int id) {
         string game = "";
-        for (int i = 0; i < players; ++i) killed[i] = false;
+        for (int i = 0; i < players; ++i) attacked[i] = false;
         int AnsSide_to_int(string m) {
             string[] s = { "left", "down", "right", "up" };
             for (int i = 0; i < s.Length; ++i) if (m == s[i]) return i;
@@ -417,7 +429,10 @@ class Map {
         }
         Coord p = player[id].coord;
         int k = AnsSide_to_int(AnsSide);
-        if (player[id].crazy) { k = rand.Next(4); player[id].crazy = false; }
+        if (player[id].shoked) {
+            k = rand.Next(4);
+            player[id].shoked = false;
+        }
         if (AnsType == "step") {
             if (Can(p, k) == FREE) {
                 Move(id, k);
@@ -473,7 +488,7 @@ class Map {
                             treasure[knife.x, knife.y] += player[i].treasures;
                             player[i].treasures = 0;
                             player[i].coord = hos;
-                            killed[i] = true;
+                            attacked[i] = true;
                         }
                     }
                 }
@@ -496,7 +511,7 @@ class Map {
                             treasure[bullet.x, bullet.y] += player[i].treasures;
                             player[i].treasures = 0;
                             player[i].coord = hos;
-                            killed[i] = true;
+                            attacked[i] = true;
                         }
                     }
                 }
@@ -521,7 +536,8 @@ class Map {
                         hit = true;
                         treasure[cracker.x, cracker.y] += player[i].treasures;
                         player[i].treasures = 0;
-                        player[i].crazy = true;
+                        player[i].shoked = true;
+                        attacked[i] = true;
                     }
                 }
             }
@@ -546,7 +562,7 @@ class Map {
             int trs = player[id].treasures, tout = player[id].treasuresOut;
             int kn = player[id].knifes, bl = player[id].bullets, ar = player[id].armors;
             int cr = player[id].crackers;
-            Console.WriteLine($"{name} trs: {trs}, out: {tout}, k,b,a,c: {{ {kn}, {bl}, {ar}, {cr} }}");
+            Console.WriteLine($"({player[id].x() + 1},{player[id].y() + 1}) {name} trs: {trs}, out: {tout}, k,b,a,c: {{ {kn}, {bl}, {ar}, {cr} }}");
         }
         void print(string s, ConsoleColor color) {
             Console.ForegroundColor = color;
@@ -591,22 +607,22 @@ class Map {
                     else Console.Write("   ");
                 }
                 if (i % 2 == 0 && j % 2 == 0) {
+                    Coord coord = new Coord(i / 2, j / 2);
+                    bool T = HaveTeleport(coord), a = ars == coord, h = hos == coord;
+                    if (T) print("T", ConsoleColor.Green);
+                    else if (a) print("a", ConsoleColor.Green);
+                    else if (h) print("h", ConsoleColor.Green);
+                    else print(" ", ConsoleColor.Green);
                     bool x = false;
                     for (int id = 0; id < players && !x; ++id) {
                         if (player[id].coord == new Coord(i / 2, j / 2)) {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Write(" {0} ", id + 1); x = true;
-                            Console.ResetColor();
+                            print($"{id + 1}", ConsoleColor.Red);
+                            x = true;
                         }
                     }
-                    if (!x) {
-                        Coord coord = new Coord(i / 2, j / 2);
-                        if (HaveTeleport(coord)) print(" T ", ConsoleColor.Green);
-                        else if (treasure[i / 2, j / 2] > 0) print(" t ", ConsoleColor.DarkBlue);
-                        else if (ars == new Coord(i / 2, j / 2)) print(" a ", ConsoleColor.Green);
-                        else if (hos == new Coord(i / 2, j / 2)) print(" h ", ConsoleColor.Green);
-                        else Console.Write(" o ");
-                    }
+                    if (!x) Console.Write("o");
+                    if (treasure[i / 2, j / 2] > 0) print("t", ConsoleColor.DarkBlue);
+                    else print(" ", ConsoleColor.DarkBlue);
                 }
                 if (i == 2 * size - 1)
                     if (2 * size - 1 - j < players)
