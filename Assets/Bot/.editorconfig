@@ -1,0 +1,30 @@
+﻿[*.cs]
+
+# IDE0001: Упрощение имен
+dotnet_diagnostic.IDE0001.severity = error
+
+csharp_new_line_before_open_brace = none
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_before_colon_in_inheritance_clause = false
+csharp_style_expression_bodied_methods=true:warning
+
+# CS0660: Тип определяет оператор == или оператор !=, но не переопределяет Object.Equals(object o)
+dotnet_diagnostic.CS0660.severity = silent
+
+# CS0661: Тип определяет оператор == или оператор !=, но не переопределяет Object.GetHashCode()
+dotnet_diagnostic.CS0661.severity = silent
+
+# IDE1006: Стили именования
+dotnet_diagnostic.IDE1006.severity = silent
+
+# IDE0022: Использовать тело блока для методов
+dotnet_diagnostic.IDE0022.severity = silent
+csharp_new_line_before_else=true
+csharp_style_expression_bodied_methods=true:warning
+csharp_style_expression_bodied_operators=true:warning
+csharp_style_expression_bodied_properties=true:warning
+csharp_style_expression_bodied_constructors=true:warning
+
+[*.{cs,vb}]
+dotnet_style_prefer_conditional_expression_over_assignment=true:suggestion
+dotnet_style_prefer_conditional_expression_over_return=true:suggestion
