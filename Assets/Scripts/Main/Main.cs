@@ -1960,7 +1960,6 @@ public struct PlayerText
     public TMPro.TextMeshPro treasureText;
 }
 
-
 public struct InitData
 {
     public int size;
@@ -2804,8 +2803,14 @@ public static class Base
     }
 }
 
-
-
+public static class MyFunctions
+{
+    /// <summary> returns val % mod in range [0, mod) </summary>
+    public static int TrueMod(int val, int mod)
+    {
+        return (val % mod + mod) % mod;
+    }
+}
 
 
 public class Main : MonoBehaviour

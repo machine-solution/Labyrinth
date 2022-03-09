@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using static System.Math;
 using static System.Array;
+using static MyFunctions;
 
 public class Play : MonoBehaviour
 {
@@ -94,8 +95,8 @@ public class Play : MonoBehaviour
     {
         if (Base.numberOfPlayers <= 3)
             return;
-        menuLeftPl = ((menuLeftPl + len) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers;
-        menuRightPl = ((menuRightPl + len) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers;
+        menuLeftPl = TrueMod(menuLeftPl + len, Base.numberOfPlayers);
+        menuRightPl = TrueMod(menuRightPl + len, Base.numberOfPlayers);
         for (int i = 0; i < Base.numberOfPlayers; ++i)
             Base.playersText[i].statsList.SetActive(false);
         for (int i = menuLeftPl; i != (menuRightPl + 1) % Base.numberOfPlayers; i = (i + 1) % Base.numberOfPlayers)
@@ -105,7 +106,7 @@ public class Play : MonoBehaviour
         for (int i = menuLeftPl; i != (menuRightPl + 1) % Base.numberOfPlayers; i = (i + 1) % Base.numberOfPlayers)
         {
             Base.playersText[i].statsList.transform.position = new Vector3(
-                menuLeftX + menuDeltaX * (((i - menuLeftPl) % Base.numberOfPlayers + Base.numberOfPlayers) % Base.numberOfPlayers), -2.9f, 0);
+                menuLeftX + menuDeltaX * TrueMod(i - menuLeftPl, Base.numberOfPlayers), -2.9f, 0);
         }
     }
 
@@ -160,8 +161,8 @@ public class Play : MonoBehaviour
                 Instantiate(Resources.Load<GameObject>("StatsOfPlayer"));
             Base.playersText[i].statsList.SetActive(true);
             if (i < 3)
-                Base.playersText[i].statsList.transform.Translate(
-                    new Vector3(menuLeftX + menuDeltaX * i, -2.9f, 0));
+                Base.playersText[i].statsList.transform.position = 
+                    new Vector3(menuLeftX + menuDeltaX * i, -2.9f, 0);
             else
                 Base.playersText[i].statsList.SetActive(false);
             Base.playersText[i].nameText =
@@ -190,10 +191,12 @@ public class Play : MonoBehaviour
         for (int j = 0; j < Min(Base.numberOfPlayers, 3); ++j)
         {
             playerFrame[j] = Instantiate(Resources.Load<GameObject>("frame"));
-            playerFrame[j].transform.position = new Vector3(menuLeftX - 0.4f + j * menuDeltaX, menuLeftY, 0);
+            playerFrame[j].transform.position = 
+                new Vector3(menuLeftX - 0.4f + j * menuDeltaX, menuLeftY, 0);
         }
         forwardBut.SetActive(true);
-        forwardBut.transform.position = new Vector3((Min(Base.numberOfPlayers, 3) - 1) * menuDeltaX - 4.19f, -3f, 0);
+        forwardBut.transform.position = 
+            new Vector3((Min(Base.numberOfPlayers, 3) - 1) * menuDeltaX - 4.19f, menuLeftY, 0);
         backBut.SetActive(true);
         for (int i = 0; i < 5; ++i)
         {
@@ -216,7 +219,7 @@ public class Play : MonoBehaviour
     }
 
     [System.Obsolete]
-    void Start()
+    protected void Start()
     {
         forwardBut.GetComponent<Button>().click = SweepForward;
         backBut.GetComponent<Button>().click = SweepBack;
@@ -249,7 +252,7 @@ public class Play : MonoBehaviour
     }
 
     [System.Obsolete]
-    void Update()
+    protected void Update()
     {
         if (Base.endOfGame)
         {

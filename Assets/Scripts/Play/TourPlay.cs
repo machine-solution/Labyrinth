@@ -5,14 +5,14 @@ using UnityEngine;
 public class TourPlay : Play
 {
     // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+//    void Start()
+//    {
+//        
+//    }
 
     // Update is called once per frame
     [System.Obsolete]
-    void Update()
+    new void Update()
     {
         if (Base.endOfGame)
         {

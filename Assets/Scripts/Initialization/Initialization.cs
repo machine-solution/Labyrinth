@@ -6,6 +6,9 @@ using UnityEngine;
 public class Initialization : MonoBehaviour
 {
     protected GameObject startBut;
+    /// <summary>
+    /// initialization scene not
+    /// </summary>
     protected GameObject loadBut;
     //______________________________
     protected GameObject[] playerInit;
@@ -79,11 +82,11 @@ public class Initialization : MonoBehaviour
     void Start()
     { 
         startBut = GameObject.Find("StartButton");
-        loadBut = GameObject.Find("LoadBut");
+//        loadBut = GameObject.Find("LoadBut");
         GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
         startBut.SetActive(true);
         startBut.GetComponent<Button>().click = StartGame;
-        loadBut.SetActive(false);
+//        loadBut.SetActive(false);
         playerInit = new GameObject[Base.main.k];
         for (int i = 0; i < Base.main.k; ++i)
         {
