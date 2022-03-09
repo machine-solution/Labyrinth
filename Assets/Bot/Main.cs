@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 
+/*
 class ItMain {
     static int numberOfGames = 100;
     static int steps = 0;
@@ -356,12 +357,12 @@ class Map {
             ++treasure[rand.Next(size), rand.Next(size)];
         }
         teleport = new Coord[2 * teleportsPairs];
-        /******************************************************************************
-         *                                                             ___            *
-         * it doesn't work for teleportsPairs>1, just imagine this:   | 1   2 ___     *
-         *                                                             ̅ ̅ ̅   1  2 |    *
-         *                                                                    ̅ ̅ ̅      *
-         ******************************************************************************/
+//         ******************************************************************************
+//         *                                                             ___            *
+//         * it doesn't work for teleportsPairs>1, just imagine this:   | 1   2 ___     *
+//         *                                                             ̅ ̅ ̅   1  2 |    *
+//         *                                                                    ̅ ̅ ̅      *
+//         ******************************************************************************
         for (int i = 0; i < teleportsPairs; ++i) {
             Coord t1 = new Coord(rand.Next(size), rand.Next(size)), t2;
             do t2 = new Coord(rand.Next(size), rand.Next(size));
@@ -661,3 +662,4 @@ public struct Coord: ICloneable {
     }
     public object Clone() => MemberwiseClone();
 }
+*/

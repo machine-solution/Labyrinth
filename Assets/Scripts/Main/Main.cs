@@ -431,6 +431,9 @@ public static class Check
 
 }
 
+// class bot is defines in Assests/Bot/Bot.cs file
+/*
+
 /// <summary> Корень иерархии классов ботов </summary>
 public class Bot
 {
@@ -1892,6 +1895,8 @@ public class Bot_Rand : Bot_Bob
     public override void Update(string ansType_id, string ansSide_id, string gameAns_id, int id)
         => RandomAns(3);
 }
+
+*/
 
 public struct Player : System.ICloneable
 {
