@@ -14,6 +14,7 @@ public class RayCast : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // left click
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 ray = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -39,7 +40,7 @@ public class RayCast : MonoBehaviour
                     }
                     if (hit[i].transform.tag == "changer")
                     {
-                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseDownChan();
+                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseDownChanger();
                     }
                     if (hit[i].transform.tag == "slider")
                     {
@@ -58,6 +59,7 @@ public class RayCast : MonoBehaviour
                 }
             }
         }
+        // left click
         if (Input.GetMouseButtonUp(0))
         {
             Vector2 ray = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -83,7 +85,7 @@ public class RayCast : MonoBehaviour
                     }
                     if (hit[i].transform.tag == "changer")
                     {
-                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseUpChan();
+                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseUpChanger(1);
                     }
                     if (hit[i].transform.tag == "toggle")
                     {
@@ -96,6 +98,60 @@ public class RayCast : MonoBehaviour
                 }
             }
         }
-        
+        // right click
+        if (Input.GetMouseButtonDown(1))
+        {
+            Vector2 ray = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D[] hit = new RaycastHit2D[228];
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.useLayerMask = false;
+
+
+            int cnt = Physics2D.Raycast(ray, Vector2.zero, filter, hit);
+
+            int maxLayer = 0; //default
+            for (int i = 0; i < cnt && i < 228; ++i)
+            {
+                maxLayer = Max(maxLayer, hit[i].transform.gameObject.layer);
+            }
+            for (int i = 0; i < cnt; ++i)
+            {
+                if (hit[i].transform.gameObject.layer == maxLayer)
+                {
+                    if (hit[i].transform.tag == "changer")
+                    {
+                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseDownChanger();
+                    }
+                }
+            }
+        }
+        // right click
+        if (Input.GetMouseButtonUp(1))
+        {
+            Vector2 ray = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D[] hit = new RaycastHit2D[228];
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.useLayerMask = false;
+
+
+            int cnt = Physics2D.Raycast(ray, Vector2.zero, filter, hit);
+
+            int maxLayer = 0; //default
+            for (int i = 0; i < cnt && i < 228; ++i)
+            {
+                maxLayer = Max(maxLayer, hit[i].transform.gameObject.layer);
+            }
+            for (int i = 0; i < cnt; ++i)
+            {
+                if (hit[i].transform.gameObject.layer == maxLayer)
+                {
+                    if (hit[i].transform.tag == "changer")
+                    {
+                        hit[i].transform.gameObject.GetComponent<Changer>().OnMouseUpChanger(-1);
+                    }
+                }
+            }
+        }
+
     }
 }

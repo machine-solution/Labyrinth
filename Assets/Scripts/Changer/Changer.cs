@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static MyFunctions;
 
 public class Changer : MonoBehaviour
 {
@@ -39,7 +40,7 @@ public class Changer : MonoBehaviour
         }
     }
 
-    public void OnMouseDownChan()
+    public void OnMouseDownChanger()
     {
         if (!locked)
         {
@@ -47,11 +48,15 @@ public class Changer : MonoBehaviour
         }
     }
 
-    public void OnMouseUpChan()
+    /// <summary>
+    /// change state of changer 'scroll' times
+    /// </summary>
+    /// <param name="scroll"></param>
+    public void OnMouseUpChanger(int scroll)
     {
         if (!locked)
         {
-            iter = (iter + 1) % spriteUp.Length;
+            iter = TrueMod(iter + scroll, spriteUp.Length);
             gameObject.GetComponent<SpriteRenderer>().sprite = spriteUp[iter];
             val = mass[iter];
             if (haveText)
