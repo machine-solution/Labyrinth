@@ -138,7 +138,7 @@ public class InputText : MonoBehaviour
         {
 #if UNITY_STANDALONE
             text = RedactStr(text, GetChar());
-            if (text.Length>limit)
+            if (text.Length > limit)
                 text = text.Substring(0, limit);
 #endif
 #if UNITY_ANDROID

@@ -17,16 +17,18 @@ public class RayCast : MonoBehaviour
         // left click
         if (Input.GetMouseButtonDown(0))
         {
+            int maxSize = 228;
             Vector2 ray = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D[] hit = new RaycastHit2D[228];
+            RaycastHit2D[] hit = new RaycastHit2D[maxSize];
             ContactFilter2D filter = new ContactFilter2D();
             filter.useLayerMask = false;
             
 
             int cnt = Physics2D.Raycast(ray, Vector2.zero, filter, hit);
+            cnt = Min(cnt, maxSize);
 
             int maxLayer = 0; //default
-            for (int i = 0; i < cnt && i < 228; ++i)
+            for (int i = 0; i < cnt; ++i)
             {
                 maxLayer = Max(maxLayer, hit[i].transform.gameObject.layer);
             }
