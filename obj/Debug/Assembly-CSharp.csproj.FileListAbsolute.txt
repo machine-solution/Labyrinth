@@ -278,3 +278,7 @@ C:\Andrey\Unity\Labyrinth\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cac
 C:\Andrey\Unity\Labyrinth\obj\Debug\Assembly-CSharp.csproj.CopyComplete
 C:\Andrey\Unity\Labyrinth\obj\Debug\Assembly-CSharp.dll
 C:\Andrey\Unity\Labyrinth\obj\Debug\Assembly-CSharp.pdb
+C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp.csproj.AssemblyReference.cache
+C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
+C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp.dll
+C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp.pdb
