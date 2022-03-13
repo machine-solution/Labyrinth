@@ -67,7 +67,7 @@ public class Initialization : MonoBehaviour
     [System.Obsolete]
     public void StartGame()
     {
-        int[] type = new int[Base.main.k]; 
+        int[] type = new int[Base.main.k];
         string[] name = new string[Base.main.k];
         for (int i = 0; i < Base.main.k; ++i)
         {
@@ -80,20 +80,20 @@ public class Initialization : MonoBehaviour
 
     [System.Obsolete]
     void Start()
-    { 
+    {
         startBut = GameObject.Find("StartButton");
-//        loadBut = GameObject.Find("LoadBut");
+        //        loadBut = GameObject.Find("LoadBut");
         GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
         startBut.SetActive(true);
         startBut.GetComponent<Button>().click = StartGame;
-//        loadBut.SetActive(false);
+        //        loadBut.SetActive(false);
         playerInit = new GameObject[Base.main.k];
         for (int i = 0; i < Base.main.k; ++i)
         {
-            if (Base.main.f_tp)
+            /*if (Base.main.f_tp)
                 playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor(teleport) Variant"));
-            else
-                playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor"));
+            else*/
+            playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor"));
             playerInit[i].transform.position = new Vector3(-7f, 3.9f - 1.1f * i, 0f);
         }
 
@@ -101,6 +101,6 @@ public class Initialization : MonoBehaviour
 
     void Update()
     {
-        
+
     }
 }

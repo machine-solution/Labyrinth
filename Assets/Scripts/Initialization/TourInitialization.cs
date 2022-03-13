@@ -33,10 +33,10 @@ public class TourInitialization : Initialization
         playerInit = new GameObject[Base.main.k];
         for (int i = 0; i < Base.main.k; ++i)
         {
-            if (Base.main.f_tp)
+            /*if (Base.main.f_tp)
                 playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor(teleport) Variant"));
-            else
-                playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor"));
+            else*/
+            playerInit[i] = Instantiate(Resources.Load<GameObject>("competitor"));
             playerInit[i].transform.position = new Vector3(-7f, 3.9f - 1.1f * i, 0f);
         }
 
