@@ -57,7 +57,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Confirm\Confirm.cs" />
-    <Compile Include="Assets\Bot\Bot.cs" />
     <Compile Include="Assets\Scripts\Background\Click.cs" />
     <Compile Include="Assets\Scripts\Button\Button.cs" />
     <Compile Include="Assets\Scripts\Main\Main.cs" />
@@ -94,6 +93,7 @@
     <Compile Include="Assets\Scripts\End\TourEnd.cs" />
     <Compile Include="Assets\Scripts\Changer\Changer.cs" />
     <Compile Include="Assets\Scripts\PageSelecter\VariantButton.cs" />
+    <Compile Include="Assets\Scripts\Bots\Bot.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Resources\Shaders\TMPro.cginc" />
