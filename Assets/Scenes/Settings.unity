@@ -778,6 +778,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: SaveBut
       objectReference: {fileID: 0}
+    - target: {fileID: 6890830054757437710, guid: 977814d6bcd58a2499ba5e2a23230cb8,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7058435333744588980, guid: 977814d6bcd58a2499ba5e2a23230cb8,
         type: 3}
       propertyPath: m_RootOrder

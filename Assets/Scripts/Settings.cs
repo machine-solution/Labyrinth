@@ -22,15 +22,29 @@ public class Settings : MonoBehaviour
         Base.main.SetGameSettings(slider_n.GetVal(), slider_k.GetVal(), slider_t.GetVal(), toggle_f_tp.condition);
     }
 
+    /// <summary>
+    /// now it save settings if user go away
+    /// </summary>
     [System.Obsolete]
     public void Back()
     {
+        SaveSettings();
         if (Base.main.lastScene != "")
         {
             Base.main.currentScene = Base.main.lastScene;
             Base.main.OnScene(Base.main.lastScene);
             Base.main.lastScene = "";
         }
+    }
+
+    /// <summary>
+    /// now it save settings if user go away
+    /// </summary>
+    [System.Obsolete]
+    public void ToMenu()
+    {
+        SaveSettings();
+        Base.main.OnScene_Menu();
     }
 
     [System.Obsolete]
@@ -41,8 +55,7 @@ public class Settings : MonoBehaviour
         slider_t = GameObject.Find("slider_not").GetComponent<Slider>();
         slider_volume = GameObject.Find("slider_volume").GetComponent<Slider>();
         toggle_f_tp = GameObject.Find("toggle_teleport").GetComponent<Toggle>();
-        GameObject.Find("SaveBut").GetComponent<Button>().click = SaveSettings;
-        GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
+        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
         GameObject.Find("BackBut").GetComponent<Button>().click = Back;
 
         Base.main.LoadGameSettings();
