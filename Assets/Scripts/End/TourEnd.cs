@@ -13,7 +13,7 @@ public class TourEnd : MonoBehaviour
 
     int[] keys;
     int[] items;
-    public bool is_result = false;
+    public bool showed_result = false;
     const float distS = 1.7f;
     const float distW = 0.85f;
     //__________________________________
@@ -28,14 +28,13 @@ public class TourEnd : MonoBehaviour
         ShufflePlayers();
         Base.is_fresh_res = false;
         Base.Initialisation(Base.main.n, Base.main.k, Base.main.t, Base.main.f_tp, Base.tourNames, Base.tourTypes, Random.Range(0, 1000000));
-        Base.main.OnScene_Play();
+        Base.main.OnScene(Scene.TOUR_PLAY);
     }
 
 
     public void ShowLocalResults()
     {
         HideResults();
-        is_result = true;
         lines = new GameObject[Base.numberOfPlayers];
         medals = new GameObject[Base.numberOfPlayers];
         for (int i = 0; i < Base.numberOfPlayers; ++i)
@@ -66,12 +65,11 @@ public class TourEnd : MonoBehaviour
             lines[i].transform.GetChild(0).GetComponent<TMPro.TextMeshPro>().text = Base.currentPosition.players[items[i]].name;
             lines[i].transform.GetChild(1).GetComponent<TMPro.TextMeshPro>().text = keys[i].ToString();
         }
-        is_result = true;
+        showed_result = true;
     }
     public void ShowGlobalResults()
     {
         HideResults();
-        is_result = true;
         lines = new GameObject[Base.numberOfPlayers];
         medals = new GameObject[Base.numberOfPlayers];
         for (int i = 0; i < Base.numberOfPlayers; ++i)
@@ -99,13 +97,13 @@ public class TourEnd : MonoBehaviour
             lines[i].transform.GetChild(1).GetComponent<TMPro.TextMeshPro>().text = Base.tourPoints[items[i]].ToString();
             lines[i].transform.GetChild(2).GetComponent<TMPro.TextMeshPro>().text = Base.tourTreasures[items[i]].ToString();
         }
-        is_result = true;
+        showed_result = true;
     }
     public void HideResults()
     {
-        if (!is_result)
+        if (!showed_result)
             return;
-        is_result = false;
+        showed_result = false;
         for (int i = 0; i < Base.numberOfPlayers; ++i)
         {
             Destroy(lines[i]);
@@ -175,11 +173,23 @@ public class TourEnd : MonoBehaviour
     }
 
     [System.Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
+    }
+
+    [System.Obsolete]
+    void ToMap()
+    {
+        Base.main.OnScene(Scene.MAP);
+    }
+
+    [System.Obsolete]
     void Start()
     {
         GameObject.Find("StartButton").GetComponent<Button>().click = PlayAgain;
-        GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
-        GameObject.Find("MapBut").GetComponent<Button>().click = Base.main.OnScene_Map;
+        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
+        GameObject.Find("MapBut").GetComponent<Button>().click = ToMap;
         GameObject.Find("LocalResultsBut").GetComponent<Button>().click = ShowLocalResults;
         GameObject.Find("GlobalResultsBut").GetComponent<Button>().click = ShowGlobalResults;
         GameObject.Find("SaveTournamentBut").GetComponent<Button>().click = SaveCurrentTournament;

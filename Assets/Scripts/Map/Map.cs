@@ -788,6 +788,17 @@ public class Map : MonoBehaviour
     }
 
     [System.Obsolete]
+    public void Back()
+    {
+        if (Base.main.lastScene != Scene.MAX_SCENE)
+        {
+            Base.main.currentScene = Base.main.lastScene;
+            Base.main.OnScene(Base.main.lastScene);
+            Base.main.lastScene = Scene.MAX_SCENE;
+        }
+    }
+
+    [System.Obsolete]
     void Start()
     {
         mapScale = (8f / Base.size) / (1f * distS);
@@ -795,10 +806,7 @@ public class Map : MonoBehaviour
             mapScale = 1f;
         animeBut = GameObject.Find("AnimeBut");
         backBut = GameObject.Find("BackBut");
-        if (Base.is_tournament)
-            backBut.GetComponent<Button>().click = Base.main.OnScene_TourEnd;
-        else
-            backBut.GetComponent<Button>().click = Base.main.OnScene_End; 
+        backBut.GetComponent<Button>().click = Back;
         animeStopBut = animeBut.transform.GetChild(1).GetComponent<Button>();
         animePlayBut = animeBut.transform.GetChild(0).GetComponent<Button>();
         animeSpeedBut = animeBut.transform.GetChild(2).GetComponent<Changer>();

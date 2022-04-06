@@ -219,6 +219,12 @@ public class Play : MonoBehaviour
     }
 
     [System.Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
+    }
+
+    [System.Obsolete]
     protected void Start()
     {
         forwardBut.GetComponent<Button>().click = SweepForward;
@@ -238,7 +244,7 @@ public class Play : MonoBehaviour
         Base.strikeBut = GameObject.Find("Strike");
         Base.fireBut = GameObject.Find("Fire");
         Base.throwBut = GameObject.Find("Throw");
-        menuBut.GetComponent<Button>().click = Base.main.OnScene_Menu;
+        menuBut.GetComponent<Button>().click = ToMenu;
         finishBut.GetComponent<Button>().click = Finish;
 
         forwardBut.SetActive(true);
@@ -258,7 +264,7 @@ public class Play : MonoBehaviour
         {
             Base.endOfGame = false;
             Base.SaveResults();
-            Base.main.OnScene_End();
+            Base.main.OnScene(Scene.END);
         }
         else if (!Base.endOfGame && (Base.currentPosition.players[Base.currentPosition.index].bot != null))
         {

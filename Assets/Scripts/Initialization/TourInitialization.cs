@@ -18,14 +18,21 @@ public class TourInitialization : Initialization
             Base.tourTypes[i] = type[i];
         }
         Base.Initialisation(Base.main.n, Base.main.k, Base.main.t, Base.main.f_tp, name, type, Random.Range(0, 1000000));
-        Base.main.OnScene_TourPlay();
+        Base.main.OnScene(Scene.TOUR_PLAY);
     }
-    // Start is called before the first frame update
+
+    [System.Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
+    }
+
+    [System.Obsolete]
     void Start()
     {
         startBut = GameObject.Find("StartButton");
         loadBut = GameObject.Find("LoadBut");
-        GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
+        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
         startBut.SetActive(true);
         startBut.GetComponent<Button>().click = StartGame;
         loadBut.SetActive(true);

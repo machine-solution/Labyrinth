@@ -216,6 +216,12 @@ public class MP_Play : MonoBehaviour
     }
 
     [System.Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
+    }
+
+    [System.Obsolete]
     void Start()
     {
         forwardBut = GameObject.Find("ForwardBut");
@@ -239,7 +245,7 @@ public class MP_Play : MonoBehaviour
         Base.throwBut = GameObject.Find("Throw");
         startBut = GameObject.Find("StartButton");
         menuBut = GameObject.Find("MenuBut");
-        menuBut.GetComponent<Button>().click = Base.main.OnScene_Menu;
+        menuBut.GetComponent<Button>().click = ToMenu;
         finishBut = GameObject.Find("FinishBut");
         finishBut.GetComponent<Button>().click = Finish;
 
@@ -261,9 +267,9 @@ public class MP_Play : MonoBehaviour
             Base.endOfGame = false;
             Base.SaveResults();
             if (!Base.is_tournament)
-                Base.main.OnScene_End();
+                Base.main.OnScene(Scene.END);
             else
-                Base.main.OnScene_TourEnd();
+                Base.main.OnScene(Scene.TOUR_END);
         }
         else if (!Base.endOfGame && (Base.currentPosition.players[Base.currentPosition.index].bot != null))
         {

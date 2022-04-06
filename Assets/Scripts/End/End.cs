@@ -70,14 +70,26 @@ public class End : MonoBehaviour
         keys = items = new int[0];
     }
 
+    [Obsolete]
+    void ToMap()
+    {
+        Base.main.OnScene(Scene.MAP);
+    }
+
+    [Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
+    }
+
     //________________________________
     [Obsolete]
     void Start()
     {
         
-        GameObject.Find("MapBut").GetComponent<Button>().click = Base.main.OnScene_Map;
+        GameObject.Find("MapBut").GetComponent<Button>().click = ToMap;
 //        GameObject.Find("ResultBut").GetComponent<Button>().click = ShowResults;
-        GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
+        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
         ShowResults();
     }
 

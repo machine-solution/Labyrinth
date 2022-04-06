@@ -1346,6 +1346,23 @@ public static class MyFunctions
 
 }
 
+public enum Scene
+{
+    MENU = 0,
+    SETTINGS,
+    PLAY,
+    TOUR_PLAY,
+    END,
+    TOUR_END,
+    INITIALIZATION,
+    TOUR_INITIALIZATION,
+    MAP,
+    RULES,
+    MP_MENU,
+    MP_JOIN,
+    MP_PLAY,
+    MAX_SCENE
+}
 
 public class Main : MonoBehaviour
 {
@@ -1461,7 +1478,7 @@ public class Main : MonoBehaviour
     }
 
     //__________________________________
-    public void SaveMassiveOfInt(string Name, int[]Massive)
+    public void SaveMassiveOfInt(string Name, int[] Massive)
     {
         PlayerPrefs.SetInt(Name + "_size", Massive.Length);
         for (int i = 0; i < Massive.Length; ++i)
@@ -1545,7 +1562,7 @@ public class Main : MonoBehaviour
         }
     }
     //__________________________________
-    public int n = 2, k = 2, t = 1; //221
+    public int n = 2, k = 2, t = 1; // size, players, treasures
     public bool f_tp = true;
     public int volume = 100;
 
@@ -1654,138 +1671,24 @@ public class Main : MonoBehaviour
         SaveTournamentList();
     }
     //__________________________________
-    public string currentScene;
-    public string lastScene;
-    [System.Obsolete]
-    public void OnScene_Menu()
-    {
-        lastScene = currentScene;
-        currentScene = "Menu";
-        InputText.act_id = -1;
-        Base.is_tournament = false;
-        Application.LoadLevel("Menu");
-    }
+    public Scene currentScene = Scene.MAX_SCENE;
+    public Scene lastScene = Scene.MAX_SCENE;
+    private string[] sceneName = { "Menu", "Settings", "Play", "TourPlay", "End",
+        "TourEnd", "Initialization", "TourInitialization", "Map", "Rules", "MP_Menu",
+        "MP_Join", "MP_Play"};
 
     [System.Obsolete]
-    public void OnScene_Settings()
-    {
-        lastScene = currentScene;
-        currentScene = "Settings";
-        InputText.act_id = -1;
-        Application.LoadLevel("Settings");
-    }
-
-    [System.Obsolete]
-    public void OnScene_Play()
-    {
-        lastScene = currentScene;
-        currentScene = "Play";
-        InputText.act_id = -1;
-        Application.LoadLevel("Play");
-    }
-
-    [System.Obsolete]
-    public void OnScene_TourPlay()
-    {
-        lastScene = currentScene;
-        currentScene = "TourPlay";
-        InputText.act_id = -1;
-        Application.LoadLevel("TourPlay");
-    }
-
-    [System.Obsolete]
-    public void OnScene_End()
-    {
-        lastScene = currentScene;
-        currentScene = "End";
-        InputText.act_id = -1;
-        Application.LoadLevel("End");
-    }
-
-    [System.Obsolete]
-    public void OnScene_TourEnd()
-    {
-        lastScene = currentScene;
-        currentScene = "End";
-        InputText.act_id = -1;
-        Application.LoadLevel("TourEnd");
-    }
-
-    [System.Obsolete]
-    public void OnScene_Initialization()
-    {
-        lastScene = currentScene;
-        currentScene = "Initialization";
-        InputText.act_id = -1;
-        Application.LoadLevel("Initialization");
-    }
-
-    [System.Obsolete]
-    public void OnScene_TourInitialization()
-    {
-        lastScene = currentScene;
-        currentScene = "TourInitialization";
-        InputText.act_id = -1;
-        Application.LoadLevel("TourInitialization");
-    }
-
-    [System.Obsolete]
-    public void OnScene_Map()
-    {
-        lastScene = currentScene;
-        currentScene = "Map";
-        InputText.act_id = -1;
-        Application.LoadLevel("Map");
-    }
-
-    [System.Obsolete]
-    public void OnScene_Rules()
-    {
-        lastScene = currentScene;
-        currentScene = "Rules";
-        InputText.act_id = -1;
-        Application.LoadLevel("Rules");
-    }
-
-    [System.Obsolete]
-    public void OnScene_MP_Menu()
-    {
-        lastScene = currentScene;
-        currentScene = "MP_Menu";
-        InputText.act_id = -1;
-        Application.LoadLevel("MP_Menu");
-    }
-
-    [System.Obsolete]
-    public void OnScene_MP_Join()
-    {
-        lastScene = currentScene;
-        currentScene = "MP_Join";
-        InputText.act_id = -1;
-        Application.LoadLevel("MP_Join");
-    }
-
-    [System.Obsolete]
-    public void OnScene_MP_Play()
-    {
-        lastScene = currentScene;
-        currentScene = "MP_Play";
-        InputText.act_id = -1;
-        Application.LoadLevel("MP_Play");
-    }
-
-    [System.Obsolete]
-    public void OnScene(string scene)
+    public void OnScene(Scene scene)
     {
         lastScene = currentScene;
         currentScene = scene;
         InputText.act_id = -1;
-        Application.LoadLevel(scene);
+        Application.LoadLevel(sceneName[(int)scene]);
     }
 
     void Start()
     {
-        currentScene = "Menu";
+        currentScene = Scene.MENU;
         StartCoroutine("Transition");
         LoadGameSettings();
         LoadSoundSettings();

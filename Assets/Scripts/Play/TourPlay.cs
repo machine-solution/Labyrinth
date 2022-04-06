@@ -18,7 +18,7 @@ public class TourPlay : Play
         {
             Base.endOfGame = false;
             Base.SaveResults();
-            Base.main.OnScene_TourEnd();
+            Base.main.OnScene(Scene.TOUR_END);
         }
         else if (!Base.endOfGame && (Base.currentPosition.players[Base.currentPosition.index].bot != null))
         {

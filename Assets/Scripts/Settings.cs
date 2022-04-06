@@ -29,11 +29,11 @@ public class Settings : MonoBehaviour
     public void Back()
     {
         SaveSettings();
-        if (Base.main.lastScene != "")
+        if (Base.main.lastScene != Scene.MAX_SCENE)
         {
             Base.main.currentScene = Base.main.lastScene;
             Base.main.OnScene(Base.main.lastScene);
-            Base.main.lastScene = "";
+            Base.main.lastScene = Scene.MAX_SCENE;
         }
     }
 
@@ -44,7 +44,7 @@ public class Settings : MonoBehaviour
     public void ToMenu()
     {
         SaveSettings();
-        Base.main.OnScene_Menu();
+        Base.main.OnScene(Scene.MENU);
     }
 
     [System.Obsolete]

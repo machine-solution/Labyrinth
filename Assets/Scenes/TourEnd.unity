@@ -1144,6 +1144,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2237977873620341687, guid: 977814d6bcd58a2499ba5e2a23230cb8,
         type: 3}
+      propertyPath: locked
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2237977873620341687, guid: 977814d6bcd58a2499ba5e2a23230cb8,
+        type: 3}
       propertyPath: haveConfirm
       value: 1
       objectReference: {fileID: 0}

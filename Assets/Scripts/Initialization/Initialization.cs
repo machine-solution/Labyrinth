@@ -53,7 +53,7 @@ public class Initialization : MonoBehaviour
         Base.is_fresh_res = false;
         /// Временная инициализация
         Base.Initialisation(Base.main.n, Base.main.k, Base.main.t, Base.main.f_tp, Base.tourNames, Base.tourTypes, Random.Range(0, 1000000));
-        Base.main.OnScene_Play();
+        Base.main.OnScene(Scene.PLAY);
     }
 
     [System.Obsolete]
@@ -75,7 +75,13 @@ public class Initialization : MonoBehaviour
             name[i] = playerInit[i].transform.GetChild(0).GetComponent<InputText>().text;
         }
         Base.Initialisation(Base.main.n, Base.main.k, Base.main.t, Base.main.f_tp, name, type, Random.Range(0, 1000000));
-        Base.main.OnScene_Play();
+        Base.main.OnScene(Scene.PLAY);
+    }
+
+    [System.Obsolete]
+    void ToMenu()
+    {
+        Base.main.OnScene(Scene.MENU);
     }
 
     [System.Obsolete]
@@ -83,7 +89,7 @@ public class Initialization : MonoBehaviour
     {
         startBut = GameObject.Find("StartButton");
         //        loadBut = GameObject.Find("LoadBut");
-        GameObject.Find("MenuBut").GetComponent<Button>().click = Base.main.OnScene_Menu;
+        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
         startBut.SetActive(true);
         startBut.GetComponent<Button>().click = StartGame;
         //        loadBut.SetActive(false);
