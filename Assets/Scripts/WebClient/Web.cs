@@ -5,11 +5,11 @@
     public static bool online = true;
 
     // Tick for thread timers
-    private const int tick = 5000;
+    public static int tick = 5000;
 
     // Separate requests
-    private const string sep = "#";
-    public static string post(string str)
+    public static string sep = "#";
+    private static string post(string str)
     {
         try
         {
@@ -57,6 +57,8 @@
     public static string res = string.Empty;
     public static int room = 0;
     public static int index = 0;
+
+    public static void isConnect() => _getResponse("TESTCON");
     public static void create(int par, int n) => _getResponse($"CREATE{sep}{par}{sep}{n}");
     public static void create(int par, int n, int x)
     {
@@ -76,7 +78,7 @@
     public static void clear() => _getResponse($"CLEAR{sep}{room}");
     public static void clear(int x) => _getResponse($"CLEAR{sep}{x}");
     public static void set(string str) => _getResponse($"SET{sep}{room}{sep}{str}");
-    public static void getResponse() => _getResponse($"GET{sep}{room}");
+    public static void get() => _getResponse($"GET{sep}{room}");
     public static void wait() => _getResponse($"WAIT{sep}{room}{sep}{index}");
     public static void exists(int x) => _getResponse($"EXISTS{sep}{x}");
     private static void _getResponse(string str)

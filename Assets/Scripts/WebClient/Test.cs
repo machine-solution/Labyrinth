@@ -22,6 +22,12 @@ class Test: MonoBehaviour
         try
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
+            
+            Web.isConnect();
+            wait();
+            if (Web.res != "1")
+                throw new System.ArgumentException("no connection");
+
             Web.create(239, 1, 0);
             wait();
             Debug.Log(Web.res);
@@ -39,7 +45,7 @@ class Test: MonoBehaviour
             wait();
             Debug.Log(Web.res);
 
-            Web.getResponse();
+            Web.get();
             wait();
             Debug.Log(Web.res);
 
@@ -62,7 +68,7 @@ class Test: MonoBehaviour
             watch.Stop();
             Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
         }
-        catch { Debug.Log("ops"); }
+        catch (System.Exception exc) { Debug.Log(exc.Message); }
     }
     public static void delete_all(int count = 100)
     {
