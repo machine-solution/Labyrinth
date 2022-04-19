@@ -39,13 +39,13 @@ class Test: MonoBehaviour
             wait();
             Debug.Log(Web.res);
 
-            Web.get();
+            Web.getResponse();
             wait();
             Debug.Log(Web.res);
 
             Web.exists(Web.room);
             wait();
-            Debug.Log($"room {Web.room} exists: {Web.res}");
+            Debug.Log($"room {Web.room} exists, but this free: {Web.res}");
 
             Web.names();
             wait();
@@ -58,7 +58,7 @@ class Test: MonoBehaviour
             Web.delete();
             wait();
             Debug.Log(Web.res);
-            
+
             watch.Stop();
             Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
         }
