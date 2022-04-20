@@ -298,6 +298,8 @@ MonoBehaviour:
   t: 1
   f_tp: 1
   volume: 0
+  currentScene: 13
+  lastScene: 13
 --- !u!114 &246750411
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -480,7 +482,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1429893757}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33b2adefc0c6858458ce09b9ce091c66, type: 3}
+  m_Script: {fileID: 11500000, guid: f8c30da4146e62245a4af97e6b27a7cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!4 &1429893759
