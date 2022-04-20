@@ -1,19 +1,30 @@
-﻿class Web
+﻿/// <summary>
+/// Класс для взаимодействия с комнатами на сервере.
+/// </summary>
+class Web
 {
-    // The ip and port number for the remote device. 
-    private const string ip = "http://radiant-taiga-93891.herokuapp.com/";
-    public static bool online = true;
-
-    // Tick for thread timers
+    /// <summary> Ответ сервера. res = "-1", если связи нет; ""(пустая), если запрос ещё обрабатывается. </summary>
+    public static string res = string.Empty;
+    /// <summary> Номер текущей комнаты (от 0 до 99), по умолчанию 0. Обновляется автоматически после метода Create/Join. </summary>
+    public static int room = 0;
+    /// <summary> Номер в комнате у первого игрока устройства, по умолчанию 0. Обновляется автоматически после метода Join. </summary>
+    public static int index = 0;
+    /// <summary> Ограничение времени работы одного потока (в миллисекундах). </summary>
     public static int tick = 5000;
 
-    // Separate requests
-    public static string sep = "#";
-    private static string post(string str)
+    /// <summary> Адрес удалённого сервера. </summary>
+    private const string ip = "http://radiant-taiga-93891.herokuapp.com/";
+    /// <summary> Режим работы: удалённо или локально. </summary>
+    private static readonly bool online = true;
+    /// <summary> Разделитель для описания команд. </summary>
+    private const string sep = "#";
+
+    /// <summary> post-запрос на удалённый сервер. </summary>
+    private static string Post(string mes)
     {
         try
         {
-            // https://stackoverflow.com/questions/4015324/how-to-make-an-http-post-web-request // it's hard
+            // https://stackoverflow.com/questions/4015324/how-to-make-an-http-post-web-request // сложно
             // https://stackoverflow.com/questions/9145667/how-to-post-json-to-a-server-using-c
             System.Net.HttpWebRequest httpWebRequest;
             if (online) httpWebRequest = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(ip);
@@ -23,7 +34,7 @@
 
             using (var streamWriter = new System.IO.StreamWriter(httpWebRequest.GetRequestStream()))
             {
-                string json = $"{{\"request\":\"{str}\"}}";
+                string json = $"{{\"request\":\"{mes}\"}}";
                 streamWriter.Write(json);
             }
 
@@ -41,55 +52,116 @@
         }
     }
 
-    // The response from the remote device.  
-    private static string response = string.Empty;
-
-    // Sync threads
-    private static object locker = new object();
-
+    /// <summary>
+    /// Объект, не дающий двум потокам одновременно использовать одну и ту же часть кода.
+    /// </summary>
+    private static readonly object locker = new object();
+    /// <summary>
+    /// Текущий поток с запросом на сервер.
+    /// </summary>
     private static System.Threading.Thread thread =
-        new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(get));
-
+        new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(Get));
+    /// <summary>
+    /// Текущий таймер, ограничивающий время работы thread.
+    /// </summary>
     private static System.Threading.Thread thread_timer =
-        new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(timer));
-
-
-    public static string res = string.Empty;
-    public static int room = 0;
-    public static int index = 0;
-
-    public static void isConnect() => _getResponse("TESTCON");
-    public static void create(int par, int n) => _getResponse($"CREATE{sep}{par}{sep}{n}");
-    public static void create(int par, int n, int x)
+        new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(Timer));
+    /// <summary>
+    /// Проверка соединения, res = "1".
+    /// </summary>
+    public static void IsConnect() => GetResponse("TESTCON");
+    /// <summary>
+    /// Создать комнату с данным ключом генерации, вместимостью.
+    /// res = "Успешно! Ваш номер комнаты x" или "Нет места".
+    /// </summary>
+    /// <param name="genKey">Ключ генерации</param>
+    /// <param name="capacityRoom">Вместимость комнаты</param>
+    public static void Create(int genKey, int capacityRoom) => GetResponse($"CREATE{sep}{genKey}{sep}{capacityRoom}");
+    /// <summary>
+    /// Создать комнату с данным ключом генерации, вместимостью, номером (от 0 до 99).
+    /// res = "Успешно!" или "Такая комната уже существует".
+    /// </summary>
+    /// <param name="genKey">Ключ генерации</param>
+    /// <param name="capacityRoom">Вместимость комнаты</param>
+    /// <param name="indexRoom">Номер комнаты (от 0 до 99)</param>
+    public static void Create(int genKey, int capacityRoom, int indexRoom)
     {
-        _getResponse($"CREATEX{sep}{par}{sep}{n}{sep}{x}");
-        room = x;
+        GetResponse($"CREATEX{sep}{genKey}{sep}{capacityRoom}{sep}{indexRoom}");
+        room = indexRoom;
     }
-    public static void join(int k, int x, string nam)
+    /// <summary>
+    /// Подключить игроков на данном устройстве к комнате, вместе с их именами (без спецсимволов, кавычек и '#').
+    /// </summary>
+    /// <param name="countPlayersOnDevice">Количество игроков на данном устройстве.</param>
+    /// <param name="indexRoom">Номер комнаты (от 0 до 99).</param>
+    /// <param name="names">Имена игроков (без спецсимволов, кавычек и '#').</param>
+    public static void Join(int countPlayersOnDevice, int indexRoom, string names)
     {
-        _getResponse($"JOIN{sep}{k}{sep}{x}{sep}{nam}");
-        room = x;
+        GetResponse($"JOIN{sep}{countPlayersOnDevice}{sep}{indexRoom}{sep}{names}");
+        room = indexRoom;
     }
-    public static void rwait() => _getResponse($"RWAIT{sep}{room}");
-    public static void names() => _getResponse($"NAMES{sep}{room}");
-    public static void parms() => _getResponse($"PARMS{sep}{room}");
-    public static void delete() => _getResponse($"DELETE{sep}{room}");
-    public static void delete(int x) => _getResponse($"DELETE{sep}{x}");
-    public static void clear() => _getResponse($"CLEAR{sep}{room}");
-    public static void clear(int x) => _getResponse($"CLEAR{sep}{x}");
-    public static void set(string str) => _getResponse($"SET{sep}{room}{sep}{str}");
-    public static void get() => _getResponse($"GET{sep}{room}");
-    public static void wait() => _getResponse($"WAIT{sep}{room}{sep}{index}");
-    public static void exists(int x) => _getResponse($"EXISTS{sep}{x}");
-    private static void _getResponse(string str)
+    /// <summary>
+    /// Ожидание заполненности комнаты.
+    /// res = "0" или "1".
+    /// </summary>
+    public static void RoomWait() => GetResponse($"RWAIT{sep}{room}");
+    /// <summary>
+    /// Получить имена (без спецсимволов, кавычек и '#') с сервера. res = имена.
+    /// </summary>
+    public static void Names() => GetResponse($"NAMES{sep}{room}");
+    /// <summary>
+    /// Получить ключ генерации с сервера. res = ключ генерации.
+    /// </summary>
+    public static void GenKey() => GetResponse($"PARMS{sep}{room}");
+    /// <summary>
+    /// Удалить текущую комнату. res = "0".
+    /// </summary>
+    public static void Delete() => GetResponse($"DELETE{sep}{room}");
+    /// <summary>
+    /// Удалить комнату с данным номером (от 0 до 99). res = "0".
+    /// </summary>
+    /// <param name="indexRoom">Номер комнаты (от 0 до 99).</param>
+    public static void Delete(int indexRoom) => GetResponse($"DELETE{sep}{indexRoom}");
+    /// <summary>
+    /// Очистить комнату. res = "0".
+    /// </summary>
+    public static void Clear() => GetResponse($"CLEAR{sep}{room}");
+    /// <summary>
+    /// Очистить комнату с данным номером (от 0 до 99). res = "0".
+    /// </summary>
+    /// <param name="indexRoom">Номер комнаты (от 0 до 99).</param>
+    public static void Clear(int indexRoom) => GetResponse($"CLEAR{sep}{indexRoom}");
+    /// <summary>
+    /// Удалённо сохранить строку (без спецсимволов, кавычек и '#') в текущей комнате. res = "0" или "1".
+    /// </summary>
+    /// <param name="str">Строка (без спецсимволов, кавычек и '#').</param>
+    public static void Set(string str) => GetResponse($"SET{sep}{room}{sep}{str}");
+    /// <summary>
+    /// Получить сохранённую строку (без спецсимволов, кавычек и '#') из текущей комнаты. res = сохр.строка или "1".
+    /// </summary>
+    public static void Get() => GetResponse($"GET{sep}{room}");
+    /// <summary>
+    /// Ожидание, пока все игроки получат результат последнего хода. res = "0" или "1".
+    /// </summary>
+    public static void Wait() => GetResponse($"WAIT{sep}{room}{sep}{index}");
+    /// <summary>
+    /// Проверка существования комнаты с данным номером (от 0 до 99). (булев ответ) res = "0" или "1".
+    /// </summary>
+    /// <param name="indexRoom">Номер комнаты (от 0 до 99).</param>
+    public static void Exists(int indexRoom) => GetResponse($"EXISTS{sep}{indexRoom}");
+    /// <summary>
+    /// Запуск запроса на сервер в потоке, время работы которого ограниченно таймером.
+    /// </summary>
+    /// <param name="mes">Сообщение на сервер.</param>
+    private static void GetResponse(string mes)
     {
         try
         {
             res = "";
             if (thread_timer.IsAlive) thread_timer.Abort();
-            thread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(get));
-            thread_timer = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(timer));
-            thread.Start(str);
+            thread = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(Get));
+            thread_timer = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(Timer));
+            thread.Start(mes);
             thread_timer.Start(thread);
         }
         catch
@@ -97,7 +169,11 @@
             res = "-1";
         }
     }
-    private static void timer(object th)
+    /// <summary>
+    /// Таймер, ограничивающий работу потока.
+    /// </summary>
+    /// <param name="th">Поток, который должен отключиться по таймеру.</param>
+    private static void Timer(object th)
     {
         System.Threading.Thread.Sleep(tick);
         if (thread.IsAlive && thread.Equals(th))
@@ -106,23 +182,32 @@
             res = "-1";
         }
     }
-    private static void get(object str)
+    /// <summary>
+    /// Обработка ответа сервера на запрос.
+    /// </summary>
+    /// <param name="mes">Сообщение на сервер.</param>
+    private static void Get(object mes)
     {
         lock (locker)
         {
             try
             {
-                string s = (string)str;
-                response = post(s).Trim('\"');
-                if (s.StartsWith($"CREATE{sep}"))
+                string s = (string)mes;
+                string response = Post(s).Trim('\"');
+                if (response == string.Empty) res = "-1";
+                else
                 {
-                    string[] split = response.Split();
-                    int len = split.Length;
-                    int.TryParse(split[len - 1], out room);
+                    if (s.StartsWith($"CREATE{sep}"))
+                    {
+                        string[] split = response.Split();
+                        int len = split.Length;
+                        int.TryParse(split[len - 1], out room);
+                    }
+                    else if (s.StartsWith($"JOIN{sep}"))
+                        int.TryParse(response, out index);
+                    res = response;
                 }
-                else if (s.StartsWith($"JOIN{sep}"))
-                    int.TryParse(response, out index);
-                res = response;
+                
             }
             catch { res = "-1"; }
         }

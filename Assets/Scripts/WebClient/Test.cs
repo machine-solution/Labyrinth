@@ -11,7 +11,7 @@ class Test: MonoBehaviour
     {
         var watch = System.Diagnostics.Stopwatch.StartNew();
         while (Web.res == "")
-            if (watch.ElapsedMilliseconds >= 6000)
+            if (watch.ElapsedMilliseconds >= Web.tick + 1000)
             {
                 Debug.Log("so long ... ");
                 break;
@@ -22,48 +22,48 @@ class Test: MonoBehaviour
         try
         {
             var watch = System.Diagnostics.Stopwatch.StartNew();
-            
-            Web.isConnect();
+
+            Web.IsConnect();
             wait();
             if (Web.res != "1")
                 throw new System.ArgumentException("no connection");
 
-            Web.create(239, 1, 0);
+            Web.Create(239,1,0);
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (creating the room {Web.room})");
 
-            Web.join(1, Web.room, "names");
+            Web.Join(1, Web.room, "Andrey&Sergey");
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (==index, if joined to the room {Web.room})");
 
-            Web.rwait();
+            Web.RoomWait();
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (==1, if waiting other players in the current room)");
 
-            string str = "hi!";
-            Web.set(str);
+            string str = "Привет! Мой ход: fire&down";
+            Web.Set(str);
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (==0, if successfully sent string to the current room)");
 
-            Web.get();
+            Web.Get();
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (string from the current room)");
 
-            Web.exists(Web.room);
+            Web.Exists(Web.room);
             wait();
-            Debug.Log($"room {Web.room} exists, but this free: {Web.res}");
+            Debug.Log($"{Web.res} (==1, if the room {Web.room} exists)");
 
-            Web.names();
+            Web.Names();
             wait();
-            Debug.Log($"Web.names: {Web.res}");
+            Debug.Log($"names: {Web.res}");
 
-            Web.parms();
+            Web.GenKey();
             wait();
-            Debug.Log($"Web.parms: {Web.res}");
+            Debug.Log($"generation key: {Web.res}");
 
-            Web.delete();
+            Web.Delete();
             wait();
-            Debug.Log(Web.res);
+            Debug.Log($"{Web.res} (==0, if successfully delete the current room)");
 
             watch.Stop();
             Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
@@ -77,7 +77,7 @@ class Test: MonoBehaviour
             var watch = System.Diagnostics.Stopwatch.StartNew();
             for (int i = 0; i < count; ++i)
             {
-                Web.delete(i);
+                Web.Delete(i);
                 wait();
             }
             Debug.Log($"time = {(int)watch.ElapsedMilliseconds} ms");
