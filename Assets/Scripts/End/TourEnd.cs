@@ -5,22 +5,15 @@ using UnityEngine;
 using static System.Math;
 using static System.Array;
 
-public class TourEnd : MonoBehaviour
+public class TourEnd : End
 {
-    GameObject[] sw;
-    GameObject[] lines, medals;
+    // butons
+    [SerializeField]
+    GameObject StartButton, LocalResultBut, GlobalResultBut, SaveTournamentBut;
 
-
-    int[] keys;
-    int[] items;
-    public bool showed_result = false;
-    const float distS = 1.7f;
-    const float distW = 0.85f;
-    //__________________________________
-    public float resmX = -4.1f;
-    public float ressY = 4.1f;
-    public float resdY = -1.02f;
-
+    // makes variables visible in inspector
+    [SerializeField]
+    float distS, distW;
 
     [System.Obsolete]
     void PlayAgain()
@@ -35,37 +28,7 @@ public class TourEnd : MonoBehaviour
     public void ShowLocalResults()
     {
         HideResults();
-        lines = new GameObject[Base.numberOfPlayers];
-        medals = new GameObject[Base.numberOfPlayers];
-        for (int i = 0; i < Base.numberOfPlayers; ++i)
-        {
-            lines[i] = Instantiate(Resources.Load<GameObject>("lineText"));
-            lines[i].transform.position = new Vector3(3.5f, ressY + i * resdY, 0);
-        }
-        keys = new int[Base.numberOfPlayers];
-        items = new int[Base.numberOfPlayers];
-        for (int i = 0; i < Base.numberOfPlayers; ++i)
-        {
-            keys[i] = -Base.results[i];
-            items[i] = i;
-        }
-        Sort(keys, items, 0, Base.numberOfPlayers);
-        for (int i = 0; i < Base.numberOfPlayers; ++i)
-        {
-            keys[i] = -keys[i];
-        }
-        int place = -1;
-        for (int i = 0; i < Base.numberOfPlayers; ++i)
-        {
-            if (i == 0 || keys[i] < keys[i - 1])
-                place = i;
-            medals[i] = Instantiate(Resources.Load<GameObject>("medal_" + (place + 1).ToString()));
-            medals[i].transform.position =
-                lines[i].transform.position + new Vector3(-4.1f, 0, 0);
-            lines[i].transform.GetChild(0).GetComponent<TMPro.TextMeshPro>().text = Base.currentPosition.players[items[i]].name;
-            lines[i].transform.GetChild(1).GetComponent<TMPro.TextMeshPro>().text = keys[i].ToString();
-        }
-        showed_result = true;
+        base.ShowResults();
     }
     public void ShowGlobalResults()
     {
@@ -81,6 +44,7 @@ public class TourEnd : MonoBehaviour
         items = new int[Base.numberOfPlayers];
         for (int i = 0; i < Base.numberOfPlayers; ++i)
         {
+            // bad code, remove magic constant
             keys[i] = -Base.tourPoints[i] * 1000000 - Base.tourTreasures[i];
             items[i] = i;
         }
@@ -98,20 +62,6 @@ public class TourEnd : MonoBehaviour
             lines[i].transform.GetChild(2).GetComponent<TMPro.TextMeshPro>().text = Base.tourTreasures[items[i]].ToString();
         }
         showed_result = true;
-    }
-    public void HideResults()
-    {
-        if (!showed_result)
-            return;
-        showed_result = false;
-        for (int i = 0; i < Base.numberOfPlayers; ++i)
-        {
-            Destroy(lines[i]);
-            Destroy(medals[i]);
-        }
-        lines = medals = new GameObject[0];
-        keys = new int[0];
-        items = new int[0];
     }
 
     //________________________________
@@ -187,12 +137,12 @@ public class TourEnd : MonoBehaviour
     [System.Obsolete]
     void Start()
     {
-        GameObject.Find("StartButton").GetComponent<Button>().click = PlayAgain;
-        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
-        GameObject.Find("MapBut").GetComponent<Button>().click = ToMap;
-        GameObject.Find("LocalResultsBut").GetComponent<Button>().click = ShowLocalResults;
-        GameObject.Find("GlobalResultsBut").GetComponent<Button>().click = ShowGlobalResults;
-        GameObject.Find("SaveTournamentBut").GetComponent<Button>().click = SaveCurrentTournament;
+        StartButton.GetComponent<Button>().click = PlayAgain;
+        MenuBut.GetComponent<Button>().click = ToMenu;
+        MapBut.GetComponent<Button>().click = ToMap;
+        LocalResultBut.GetComponent<Button>().click = ShowLocalResults;
+        GlobalResultBut.GetComponent<Button>().click = ShowGlobalResults;
+        SaveTournamentBut.GetComponent<Button>().click = SaveCurrentTournament;
 
         FreshResults();
         Base.tourNum++;

@@ -8,22 +8,24 @@ using System;
 
 public class End : MonoBehaviour
 {
-
-    public bool is_result = false;
-    GameObject[] lines, medals;
-
-    int[] keys, items;
+    protected bool showed_result = false;
+    protected GameObject[] lines, medals;
+    protected int[] keys, items;
     //__________________________________
-    public float resmX = -4.1f;
-    public float ressY = 4.1f;
-    public float resdY = -1.02f;
+    // makes variables visible in inspector
+    [SerializeField]
+    protected GameObject MapBut, MenuBut;
+
+    //__________________________________
+    [SerializeField] 
+    protected float resmX, ressY, resdY;
 
     public void ShowResults()
     {
-        if (is_result)
+        if (showed_result)
             return;
-//        HideMap();
-        is_result = true;
+
+        showed_result = true;
         lines = new GameObject[Base.numberOfPlayers];
         medals = new GameObject[Base.numberOfPlayers];
         for (int i = 0; i < Base.numberOfPlayers; ++i)
@@ -54,20 +56,22 @@ public class End : MonoBehaviour
             lines[i].transform.GetChild(0).GetComponent<TMPro.TextMeshPro>().text = Base.currentPosition.players[items[i]].name;
             lines[i].transform.GetChild(1).GetComponent<TMPro.TextMeshPro>().text = keys[i].ToString();
         }
-        is_result = true;
+        showed_result = true;
     }
     public void HideResults()
     {
-        if (!is_result)
+        if (!showed_result)
             return;
-        is_result = false;
+        showed_result = false;
         for (int i = 0; i < Base.numberOfPlayers; ++i)
         {
             Destroy(lines[i]);
             Destroy(medals[i]);
         }
-        lines = medals = new GameObject[0];
-        keys = items = new int[0];
+        lines = new GameObject[0];
+        medals = new GameObject[0];
+        keys = new int[0];
+        items = new int[0];
     }
 
     [Obsolete]
@@ -86,10 +90,9 @@ public class End : MonoBehaviour
     [Obsolete]
     void Start()
     {
-        
-        GameObject.Find("MapBut").GetComponent<Button>().click = ToMap;
+        MapBut.GetComponent<Button>().click = ToMap;
 //        GameObject.Find("ResultBut").GetComponent<Button>().click = ShowResults;
-        GameObject.Find("MenuBut").GetComponent<Button>().click = ToMenu;
+        MenuBut.GetComponent<Button>().click = ToMenu;
         ShowResults();
     }
 
