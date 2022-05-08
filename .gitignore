@@ -1,4 +1,9 @@
 Library/
 Temp/
 Logs/
-.vs
+obj/
+.vs/
+/.vsconfig
+/*.csproj
+/*.sln
+/*.htm

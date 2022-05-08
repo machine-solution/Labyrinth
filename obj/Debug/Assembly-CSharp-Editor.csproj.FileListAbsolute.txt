@@ -1,2 +1,0 @@
-C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp-Editor.csproj.AssemblyReference.cache
-C:\Andrey\Labyrinth\Labyrinth\obj\Debug\Assembly-CSharp-Editor.csproj.CoreCompileInputs.cache
